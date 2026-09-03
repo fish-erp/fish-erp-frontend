@@ -13,7 +13,7 @@ const loginRequest = () =>
     }),
   });
 
-const tokens = (role: "USER" | "ADMIN" | "SUPER_ADMIN") => ({
+const tokens = (role: "USER" | "ADMIN") => ({
   accessToken: "access-token",
   refreshToken: "refresh-token",
   expiresIn: 900,

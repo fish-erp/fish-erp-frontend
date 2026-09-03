@@ -33,29 +33,29 @@
 }
 
 :root {
-  --background: #fff8f8;
-  --foreground: #25181e;
+  --background: #f4f8ff;
+  --foreground: #10233f;
   --card: #ffffff;
-  --card-foreground: #25181e;
-  --primary: #a8245e;
+  --card-foreground: #10233f;
+  --primary: #0b63ce;
   --primary-foreground: #ffffff;
-  --secondary: #ffe8f1;
-  --secondary-foreground: #75003f;
-  --muted: #fff0f4;
-  --muted-foreground: #725f68;
-  --accent: #ffd9e3;
-  --accent-foreground: #89124d;
-  --border: #eedde5;
-  --input: #ddbfc6;
-  --ring: #e05b91;
+  --secondary: #e2efff;
+  --secondary-foreground: #074b9a;
+  --muted: #edf4fc;
+  --muted-foreground: #5b6b82;
+  --accent: #d3e7ff;
+  --accent-foreground: #064b9b;
+  --border: #d5e2f1;
+  --input: #b8cade;
+  --ring: #2684ff;
   --success: #16845b;
   --success-soft: #e9f7f1;
   --warning: #a96813;
   --warning-soft: #fff5dc;
   --danger: #c23b55;
   --danger-soft: #fdecef;
-  --info: #3568c9;
-  --info-soft: #eaf1ff;
+  --info: #1769d2;
+  --info-soft: #e5f0ff;
 }
 
 * { border-color: var(--border); }
@@ -77,14 +77,14 @@ button:disabled { cursor: not-allowed; }
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .page-enter { animation: page-enter 220ms ease-out both; }
 .card-hover { transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
-.card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgb(43 29 36 / 7%); }
-.soft-shadow { box-shadow: 0 4px 12px rgb(43 29 36 / 5%); }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgb(15 65 115 / 9%); }
+.soft-shadow { box-shadow: 0 4px 12px rgb(15 65 115 / 7%); }
 .tabular { font-variant-numeric: tabular-nums; }
 .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 
 @keyframes page-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-.skeleton { background: linear-gradient(90deg, #fff0f4 25%, #ffe3ed 50%, #fff0f4 75%); background-size: 200% 100%; animation: skeleton 1.4s ease-in-out infinite; }
+.skeleton { background: linear-gradient(90deg, #edf4fc 25%, #dceaff 50%, #edf4fc 75%); background-size: 200% 100%; animation: skeleton 1.4s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }

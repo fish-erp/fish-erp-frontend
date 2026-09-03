@@ -9,7 +9,7 @@ export async function POST() {
   const data = await readJsonSafe(upstream);
   if (!upstream.ok) { const response = NextResponse.json(data ?? { message: "Không thể làm mới phiên" }, { status: 401 }); clearTokenCookies(response); return response; }
   const tokens = data as { accessToken: string; refreshToken: string; expiresIn: number; user: { role: string } };
-  if (!["ADMIN", "SUPER_ADMIN"].includes(tokens.user.role)) {
+  if (tokens.user.role !== "ADMIN") {
     await fetch(backendUrl("auth/logout"), {
       method: "POST",
       headers: { Authorization: `Bearer ${tokens.accessToken}` },

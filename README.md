@@ -17,7 +17,7 @@ BACKEND_API_URL=http://localhost:8080
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Access and refresh tokens are stored in HttpOnly cookies. Only `ADMIN` and `SUPER_ADMIN` accounts can sign in to the portal. A `USER` login is rejected and its newly created backend session is revoked.
+Access and refresh tokens are stored in HttpOnly cookies. Only `ADMIN` accounts can sign in to the portal. Any unsupported role is rejected and its newly created backend session is revoked.
 
 ## Routes
 

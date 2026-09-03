@@ -28,7 +28,6 @@ const empty: UserInput & { password: string } = {
   password: "",
   displayName: "",
   fullName: "",
-  role: "USER",
   status: "ACTIVE",
 };
 export function UsersPage() {
@@ -61,7 +60,6 @@ export function UsersPage() {
             password: "",
             displayName: user.displayName ?? "",
             fullName: user.fullName ?? "",
-            role: user.role,
             status: user.status,
           }
         : empty,
@@ -263,24 +261,6 @@ export function UsersPage() {
                   />
                 </label>
               ))}
-              <label>
-                <span className="mb-1.5 block text-sm font-medium">
-                  Vai trò
-                </span>
-                <Select
-                  value={form.role}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      role: e.target.value as UserInput["role"],
-                    })
-                  }
-                >
-                  <option>USER</option>
-                  <option>ADMIN</option>
-                  <option>SUPER_ADMIN</option>
-                </Select>
-              </label>
               <label>
                 <span className="mb-1.5 block text-sm font-medium">
                   Trạng thái
