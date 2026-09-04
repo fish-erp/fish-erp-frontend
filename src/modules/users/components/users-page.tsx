@@ -24,7 +24,7 @@ import type { User, UserInput } from "@/modules/users/types/user";
 
 const empty: UserInput & { password: string } = {
   email: "",
-  phoneNumber: "+84",
+  phoneNumber: "",
   password: "",
   displayName: "",
   fullName: "",

@@ -32,7 +32,7 @@ export function ImportDetailDialog({
 }: ImportDetailDialogProps) {
   if (!item) return null;
 
-  const lineItems = item.items && item.items.length > 0 ? item.items : [item];
+  const lineItems = item.items;
   const totalQty = lineItems.reduce((sum, l) => sum + l.importQuantity, 0);
   const grandTotal = lineItems.reduce((sum, l) => sum + l.totalPrice, 0);
 
@@ -84,7 +84,7 @@ export function ImportDetailDialog({
                             <Calendar className="size-3" /> HSD: {new Date(line.expireDate).toLocaleDateString("vi-VN")}
                           </span>
                         )}
-                        {line.importNote && <span className="italic">Ghi chú: {line.importNote}</span>}
+                        {line.lineNote && <span className="italic">Ghi chú: {line.lineNote}</span>}
                       </div>
                     </div>
                     <div className="text-right shrink-0">

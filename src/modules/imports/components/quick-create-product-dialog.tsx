@@ -58,6 +58,8 @@ export function QuickCreateProductDialog({
     if (open) {
       // Auto generate suggested product code based on timestamp
       const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      // Form state is intentionally reset when a new quick-create dialog opens.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         productCode: `SP-${randomSuffix}`,
         productName: defaultName,

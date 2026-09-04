@@ -1,6 +1,6 @@
 "use client";
 
-import { Fish, LogOut, Menu, Package, PackagePlus, Users, X } from "lucide-react";
+import { FileSpreadsheet, Fish, LogOut, Menu, Package, PackageMinus, PackagePlus, Users, X } from "lucide-react";
 import { useState } from "react";
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -11,6 +11,8 @@ const navigation = [
   { href: "/admin/users", label: "Quản lý người dùng", icon: Users },
   { href: "/admin/products", label: "Quản lý sản phẩm", icon: Package },
   { href: "/admin/imports", label: "Nhập kho", icon: PackagePlus },
+  { href: "/admin/exports", label: "Xuất hàng", icon: PackageMinus },
+  { href: "/admin/reports", label: "Báo cáo", icon: FileSpreadsheet },
 ];
 
 function AdminNavigation({ close }: { close?: () => void }) {
@@ -49,7 +51,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background lg:pl-64">
+    <div className="admin-shell min-h-screen bg-background lg:pl-64">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-white lg:flex">
         <Link
           href="/admin/users"
@@ -83,7 +85,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white/90 px-4 backdrop-blur lg:hidden">
+      <header className="admin-mobile-header sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white/90 px-4 backdrop-blur lg:hidden">
         <button
           onClick={() => setOpen(true)}
           className="rounded-xl p-2 hover:bg-muted"

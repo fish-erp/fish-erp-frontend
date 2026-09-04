@@ -1,6 +1,6 @@
 # Fish ERP Frontend
 
-Next.js administrator portal for managing fish feed and medicine ERP operations. The initial scope contains authentication and Users CRUD only.
+Next.js administrator portal for users, products, warehouse receipts, outbound invoices and Excel reports.
 
 ## Local setup
 
@@ -25,6 +25,13 @@ Access and refresh tokens are stored in HttpOnly cookies. Only `ADMIN` accounts 
 - `/{locale}/admin` redirects to `/{locale}/admin/users`
 - `/{locale}/admin/users`
 - `/{locale}/admin/users/:id`
+- `/{locale}/admin/products`
+- `/{locale}/admin/imports`
+- `/{locale}/admin/exports`
+- `/{locale}/admin/exports/:id/print`
+- `/{locale}/admin/reports`
+
+Report and invoice price fields are opt-in. The default export contains quantities without monetary columns.
 
 ## Verification
 

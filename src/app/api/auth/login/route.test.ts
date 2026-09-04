@@ -7,7 +7,7 @@ const loginRequest = () =>
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      email: "user@example.com",
+      identifier: "user@example.com",
       password: "password123",
       remember: true,
     }),

@@ -14,7 +14,7 @@ export const productsService = {
     search?: string;
     type?: ProductType;
     status?: ProductStatus;
-  }) => apiClient.get<ProductList>("/api/backend/products", { params }),
+  }, signal?: AbortSignal) => apiClient.get<ProductList>("/api/backend/products", { params, signal }),
   detail: (id: string) => apiClient.get<Product>(`/api/backend/products/${id}`),
   create: (input: ProductInput) =>
     apiClient.post<Product>("/api/backend/products", input),

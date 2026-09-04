@@ -32,6 +32,31 @@
   --radius-xl: 1.5rem;
 }
 
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .admin-shell > aside,
+  .admin-mobile-header {
+    display: none !important;
+  }
+
+  .admin-shell {
+    padding-left: 0 !important;
+  }
+
+  .print-page {
+    width: 100%;
+    padding: 0 !important;
+  }
+}
+
 :root {
   --background: #f4f8ff;
   --foreground: #10233f;

@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { formatVnd } from "@/lib/format";
 import { ProductSearchCombobox } from "@/modules/imports/components/product-search-combobox";
 import { QuickCreateProductDialog } from "@/modules/imports/components/quick-create-product-dialog";
@@ -70,10 +70,12 @@ export function CreateImportDialog({
   useEffect(() => {
     if (open) {
       if (editingImport) {
+        // Form state is intentionally hydrated only when the dialog opens.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setImportCode(editingImport.importCode);
         setImportNote(editingImport.importNote ?? "");
 
-        if (editingImport.items && editingImport.items.length > 0) {
+        if (editingImport.items.length > 0) {
           setLineItems(
             editingImport.items.map((item) => ({
               id: item.id,
@@ -83,22 +85,9 @@ export function CreateImportDialog({
               expireDate: item.expireDate
                 ? new Date(item.expireDate).toISOString().split("T")[0]
                 : "",
-              importNote: item.importNote ?? "",
+              importNote: item.lineNote ?? "",
             })),
           );
-        } else {
-          setLineItems([
-            {
-              id: editingImport.id,
-              product: editingImport.product ?? null,
-              importQuantity: editingImport.importQuantity,
-              importPrice: editingImport.importPrice,
-              expireDate: editingImport.expireDate
-                ? new Date(editingImport.expireDate).toISOString().split("T")[0]
-                : "",
-              importNote: editingImport.importNote ?? "",
-            },
-          ]);
         }
       } else {
         setImportCode("");
@@ -120,7 +109,7 @@ export function CreateImportDialog({
   const handleUpdateLineItem = (
     index: number,
     field: keyof ImportLineItem,
-    value: any,
+    value: ImportLineItem[keyof ImportLineItem],
   ) => {
     setLineItems((prev) =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
@@ -168,22 +157,29 @@ export function CreateImportDialog({
       }
     }
 
+    const productIds = lineItems.map((line) => line.product!.id);
+    if (new Set(productIds).size !== productIds.length) {
+      toast.error("Mỗi sản phẩm chỉ được chọn một lần trong phiếu nhập");
+      return;
+    }
+
     try {
       if (editingImport) {
-        // Edit single import
-        const first = lineItems[0];
         await mutations.update.mutateAsync({
           id: editingImport.id,
           input: {
-            productId: first.product!.id,
-            importQuantity: Number(first.importQuantity),
-            importPrice: Number(first.importPrice),
             importCode: importCode.trim() || undefined,
-            expireDate: first.expireDate
-              ? new Date(first.expireDate).toISOString()
-              : null,
-            importNote: first.importNote.trim() || importNote.trim() || null,
+            importNote: importNote.trim() || undefined,
             status: targetStatus,
+            items: lineItems.map((line) => ({
+              productId: line.product!.id,
+              importQuantity: Number(line.importQuantity),
+              importPrice: Number(line.importPrice),
+              ...(line.expireDate
+                ? { expireDate: new Date(line.expireDate).toISOString() }
+                : {}),
+              ...(line.importNote.trim() ? { lineNote: line.importNote.trim() } : {}),
+            })),
           },
         });
         toast.success(
@@ -201,7 +197,7 @@ export function CreateImportDialog({
             ? { expireDate: new Date(line.expireDate).toISOString() }
             : {}),
           ...(line.importNote.trim()
-            ? { importNote: line.importNote.trim() }
+            ? { lineNote: line.importNote.trim() }
             : {}),
         }));
 
