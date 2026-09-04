@@ -1,6 +1,6 @@
 "use client";
 
-import { Fish, LogOut, Menu, Package, Users, X } from "lucide-react";
+import { Fish, LogOut, Menu, Package, PackagePlus, Users, X } from "lucide-react";
 import { useState } from "react";
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -10,6 +10,7 @@ import { useAuth } from "@/modules/auth/components/auth-provider";
 const navigation = [
   { href: "/admin/users", label: "Quản lý người dùng", icon: Users },
   { href: "/admin/products", label: "Quản lý sản phẩm", icon: Package },
+  { href: "/admin/imports", label: "Nhập kho", icon: PackagePlus },
 ];
 
 function AdminNavigation({ close }: { close?: () => void }) {
