@@ -1,0 +1,40 @@
+name: fish-erp-frontend
+
+services:
+  frontend:
+    container_name: fish-erp-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: http://4.213.53.132
+    image: fish-erp-frontend:latest
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_SITE_URL: http://4.213.53.132
+      BACKEND_API_URL: http://backend:8080
+      COOKIE_SECURE: "false"
+    ports:
+      - "127.0.0.1:8080:3000"
+    networks:
+      - fish-erp
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/login').then(() => process.exit(0)).catch(() => process.exit(1))
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  fish-erp:
+    external: true
+    name: fish-erp_default
+
