@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
-import { formatVnd } from "@/lib/format";
+import { formatMoneyPreview, formatVnd } from "@/lib/format";
 import { clientId } from "@/lib/client-id";
 import { CustomerPicker } from "@/modules/customers/customer-picker";
 import type { Customer } from "@/modules/customers/customers";
@@ -46,7 +46,7 @@ export function CreateExportDialog({
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [exportNote, setExportNote] = useState("");
   const [lines, setLines] = useState<LineState[]>(() => [emptyLine()]);
-  const [customer, setCustomer] = useState<Pick<Customer, "id" | "name" | "phoneNumber"> | null>(null);
+  const [customer, setCustomer] = useState<(Partial<Customer> & Pick<Customer, "id" | "name" | "phoneNumber">) | null>(null);
   const [paidInFull, setPaidInFull] = useState(true);
   const [paidAmount, setPaidAmount] = useState<number | "">(0);
 
@@ -59,8 +59,8 @@ export function CreateExportDialog({
     setCustomerName(editing?.customerName ?? "");
     setCustomerPhone(editing?.customerPhone ?? "");
     setCustomer(editing?.customerId ? { id: editing.customerId, name: editing.customerName ?? "Khách hàng", phoneNumber: editing.customerPhone ?? "" } : null);
-    setPaidInFull(editing?.plannedPaidAmount == null);
-    setPaidAmount(editing?.plannedPaidAmount ?? 0);
+    setPaidInFull(editing?.paidAmount == null || editing?.paidAmount === editing?.totalAmount);
+    setPaidAmount(editing?.paidAmount ?? 0);
     setDeliveryAddress(editing?.deliveryAddress ?? "");
     setExportNote(editing?.exportNote ?? "");
     setLines(editing?.items.map((item) => ({
@@ -101,7 +101,7 @@ export function CreateExportDialog({
       exportType,
       exportStatus,
       customerId: customer?.id ?? null,
-      paidAmount: paidInFull ? null : Number(paidAmount),
+      paidAmount: paidInFull ? totalAmount : Number(paidAmount),
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
       deliveryAddress: deliveryAddress.trim(),
@@ -157,7 +157,41 @@ export function CreateExportDialog({
           </div>)}
         </div>
 
-        <section className="mt-5 rounded-xl border bg-secondary/40 p-4"><h3 className="font-semibold">Thanh toán khi hoàn tất</h3><label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={paidInFull} disabled={pending} onChange={e => setPaidInFull(e.target.checked)} />Đã trả đủ</label>{!paidInFull && <label className="mt-3 block text-sm">Đã trả (đ) <Input type="number" min={0} max={totalAmount} step="0.01" value={paidAmount} disabled={pending} onChange={e => setPaidAmount(e.target.value === "" ? "" : Number(e.target.value))} /></label>}<p className="mt-2 text-sm">Còn nợ: <strong>{formatVnd(paidInFull ? 0 : Math.max(0, totalAmount - Number(paidAmount)))}</strong></p><p className="mt-1 text-xs text-muted-foreground">Phiếu nháp chưa ghi nhận thu tiền. Giá và công nợ được chốt khi hoàn tất.</p></section>
+        <section className="mt-5 rounded-xl border bg-secondary/40 p-4">
+          <h3 className="font-semibold">Thanh toán khi hoàn tất</h3>
+          <label className="mt-2 flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={paidInFull} disabled={pending} onChange={e => setPaidInFull(e.target.checked)} />
+            Đã trả đủ
+          </label>
+          {!paidInFull && (
+            <div className="mt-3">
+              <label className="block text-sm">
+                Khách trả trước (đ)
+                <Input
+                  type="number"
+                  min={0}
+                  max={totalAmount}
+                  step="any"
+                  value={paidAmount}
+                  disabled={pending}
+                  onChange={e => setPaidAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                />
+              </label>
+              {Number(paidAmount) > 0 && (
+                <p className="mt-1 text-xs font-semibold text-primary">
+                  👉 {formatMoneyPreview(Number(paidAmount))}
+                </p>
+              )}
+            </div>
+          )}
+          {customer && (customer.advanceAmount ?? 0) > 0 && (
+            <p className="mt-2 rounded-lg border border-emerald-300/40 bg-emerald-500/10 p-2 text-xs font-medium text-emerald-700">
+              💡 Khách hàng đang có <strong>{formatVnd(customer.advanceAmount ?? 0)}</strong> tiền trả trước sẵn trong tài khoản.
+            </p>
+          )}
+          <p className="mt-2 text-sm">Còn nợ đơn này: <strong>{formatVnd(paidInFull ? 0 : Math.max(0, totalAmount - Number(paidAmount)))}</strong></p>
+          <p className="mt-1 text-xs text-muted-foreground">Phiếu nháp chưa ghi nhận thu tiền. Giá và công nợ được chốt khi hoàn tất.</p>
+        </section>
         <div className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between"><div className="text-sm"><span className="text-muted-foreground">Tổng {totalQuantity} đơn vị · </span><strong className="text-primary">{formatVnd(totalAmount)}</strong></div><div className="flex gap-2"><Button variant="outline" disabled={pending} onClick={() => void save("EDITING")}>Lưu nháp</Button><Button disabled={pending} onClick={() => void save("COMPLETED")}>{pending && <LoaderCircle className="animate-spin" />}Hoàn tất & xuất kho</Button></div></div>
       </Dialog.Content>
     </Dialog.Portal>
