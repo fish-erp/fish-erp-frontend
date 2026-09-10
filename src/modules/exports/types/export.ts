@@ -34,6 +34,7 @@ export interface ExportInvoice {
   cancelledAt: string | null;
   items: ExportLineItem[];
   totalQuantity: number;
+  shippingFee: number;
   totalAmount: number;
   createdAt: string;
   updatedAt: string;
@@ -44,6 +45,7 @@ export interface ExportInput {
   paidAmount?: number | null;
   invoiceCode?: string;
   exportType?: ExportType;
+  shippingFee?: number;
   exportStatus?: ExportStatus;
   customerName?: string;
   customerPhone?: string;
