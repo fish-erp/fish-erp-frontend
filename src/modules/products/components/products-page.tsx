@@ -21,6 +21,7 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { Page } from "@/components/ui/page";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatDateTime, formatVnd } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { useProductMutations, useProducts } from "@/modules/products/hooks/use-products";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type {
@@ -156,50 +157,144 @@ export function ProductsPage() {
         </Button>
       }
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative max-w-xl flex-1">
-          <Search className="absolute left-3 top-3.5 size-4 text-muted-foreground" />
+      <div className="space-y-3">
+        {/* Search Bar */}
+        <div className="relative w-full">
+          <Search className="absolute left-3.5 top-3 size-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Tìm theo mã hoặc tên sản phẩm"
-            className="pl-10"
+            placeholder="Tìm theo mã hoặc tên sản phẩm..."
+            className="pl-10 h-10 rounded-xl bg-white shadow-2xs"
           />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-2.5 rounded-full p-1 text-muted-foreground hover:bg-muted"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
         </div>
-        <Select
-          value={typeFilter}
-          onChange={(event) => {
-            setTypeFilter(event.target.value as ProductType | "");
-            setPage(1);
-          }}
-          className="sm:w-48"
-        >
-          <option value="">Tất cả loại</option>
-          {typeOptions.map((type) => (
-            <option key={type} value={type}>
-              {typeLabels[type]}
-            </option>
-          ))}
-        </Select>
-        <Select
-          value={statusFilter}
-          onChange={(event) => {
-            setStatusFilter(event.target.value as ProductStatus | "");
-            setPage(1);
-          }}
-          className="sm:w-48"
-        >
-          <option value="">Tất cả trạng thái</option>
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>
-              {statusLabels[status]}
-            </option>
-          ))}
-        </Select>
+
+        {/* Desktop Filter Dropdowns */}
+        <div className="hidden sm:flex sm:items-center gap-3">
+          <Select
+            value={typeFilter}
+            onChange={(event) => {
+              setTypeFilter(event.target.value as ProductType | "");
+              setPage(1);
+            }}
+            className="sm:w-48"
+          >
+            <option value="">Tất cả loại</option>
+            {typeOptions.map((type) => (
+              <option key={type} value={type}>
+                {typeLabels[type]}
+              </option>
+            ))}
+          </Select>
+          <Select
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value as ProductStatus | "");
+              setPage(1);
+            }}
+            className="sm:w-48"
+          >
+            <option value="">Tất cả trạng thái</option>
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>
+                {statusLabels[status]}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        {/* Mobile Horizontal Filter Chips */}
+        <div className="flex flex-col gap-2 sm:hidden">
+          {/* Status Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("");
+                setPage(1);
+              }}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-1.5 font-medium transition active:scale-95",
+                statusFilter === ""
+                  ? "bg-primary text-white shadow-xs"
+                  : "bg-white text-muted-foreground border hover:bg-muted",
+              )}
+            >
+              Tất cả trạng thái
+            </button>
+            {statusOptions.map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => {
+                  setStatusFilter(status);
+                  setPage(1);
+                }}
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1.5 font-medium transition active:scale-95",
+                  statusFilter === status
+                    ? "bg-primary text-white shadow-xs"
+                    : "bg-white text-muted-foreground border hover:bg-muted",
+                )}
+              >
+                {statusLabels[status]}
+              </button>
+            ))}
+          </div>
+
+          {/* Type Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setTypeFilter("");
+                setPage(1);
+              }}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition active:scale-95",
+                typeFilter === ""
+                  ? "bg-foreground/10 text-foreground font-semibold"
+                  : "bg-white/80 text-muted-foreground border hover:bg-muted",
+              )}
+            >
+              Tất cả loại
+            </button>
+            {typeOptions.map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  setTypeFilter(type);
+                  setPage(1);
+                }}
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1 text-xs font-medium transition active:scale-95",
+                  typeFilter === type
+                    ? "bg-foreground/10 text-foreground font-semibold"
+                    : "bg-white/80 text-muted-foreground border hover:bg-muted",
+                )}
+              >
+                {typeLabels[type]}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {products.isLoading ? (
-        <div className="h-56 rounded-2xl skeleton" />
+        <div className="space-y-3">
+          <div className="h-28 rounded-2xl skeleton" />
+          <div className="h-28 rounded-2xl skeleton" />
+          <div className="h-28 rounded-2xl skeleton" />
+        </div>
       ) : products.isError ? (
         <div className="rounded-2xl border bg-danger-soft p-5 text-danger">
           Không thể tải sản phẩm.{" "}
@@ -220,6 +315,85 @@ export function ProductsPage() {
           <DataTable
             rows={products.data?.data ?? []}
             rowKey={(row) => row.id}
+            renderMobileCard={(row) => (
+              <div className="rounded-2xl border bg-white p-4 shadow-xs transition active:scale-[0.99]">
+                {/* Header Card: Tên SP + Mã + Status */}
+                <div className="flex items-start justify-between gap-2 border-b pb-3">
+                  <div className="flex-1">
+                    <Link
+                      href={`/admin/products/${row.id}`}
+                      className="text-base font-bold text-foreground leading-tight line-clamp-2 hover:text-primary hover:underline"
+                    >
+                      {row.productName}
+                    </Link>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-mono font-medium">{row.productCode}</span>
+                      <span>•</span>
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        {typeLabels[row.type]}
+                      </span>
+                    </div>
+                  </div>
+                  <StatusBadge status={row.status} />
+                </div>
+
+                {/* Body Card: Giá & Tồn kho */}
+                <div className="mt-3 grid grid-cols-2 gap-3 py-1">
+                  <div className="rounded-xl bg-muted/40 p-2.5">
+                    <span className="text-[11px] font-medium text-muted-foreground block">
+                      Giá bán
+                    </span>
+                    <strong className="text-base font-bold text-primary tabular tracking-tight">
+                      {formatVnd(row.productPrice)}
+                    </strong>
+                  </div>
+
+                  <div className="rounded-xl bg-muted/40 p-2.5">
+                    <span className="text-[11px] font-medium text-muted-foreground block">
+                      Tồn kho hiện tại
+                    </span>
+                    <strong
+                      className={cn(
+                        "text-base font-bold tabular tracking-tight",
+                        row.remainingQuantity <= 5 ? "text-danger" : "text-foreground",
+                      )}
+                    >
+                      {row.remainingQuantity}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {row.productUnit}
+                      </span>
+                    </strong>
+                  </div>
+                </div>
+
+                {/* Footer Card: Actions */}
+                <div className="mt-3 flex items-center justify-between border-t pt-2.5">
+                  <span className="text-[11px] text-muted-foreground">
+                    {formatDateTime(row.createdAt)}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => showForm(row)}
+                      className="h-8 gap-1.5 text-xs font-medium"
+                    >
+                      <Pencil className="size-3.5" />
+                      Sửa
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleting(row)}
+                      className="h-8 gap-1.5 text-xs font-medium text-danger hover:bg-danger-soft"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Xóa
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             columns={[
               {
                 key: "product",
@@ -289,24 +463,43 @@ export function ProductsPage() {
               },
             ]}
           />
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+
+          {/* Floating Action Button for Mobile */}
+          <div className="fixed bottom-20 right-4 z-30 lg:hidden">
+            <button
+              onClick={() => showForm()}
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white shadow-xl transition active:scale-95"
+            >
+              <Plus className="size-5" />
+              <span>Thêm SP</span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
             <span>{products.data?.meta.total ?? 0} sản phẩm</span>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage((value) => value - 1)}
+                className="h-9 px-3 text-xs"
               >
-                <ChevronLeft />
+                <ChevronLeft className="size-4" />
+                <span className="hidden sm:inline">Trước</span>
               </Button>
+              <span className="text-xs font-medium px-2">
+                Trang {page} / {products.data?.meta.totalPages ?? 1}
+              </span>
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={page >= (products.data?.meta.totalPages ?? 1)}
                 onClick={() => setPage((value) => value + 1)}
+                className="h-9 px-3 text-xs"
               >
-                <ChevronRight />
+                <span className="hidden sm:inline">Sau</span>
+                <ChevronRight className="size-4" />
               </Button>
             </div>
           </div>
@@ -316,7 +509,7 @@ export function ProductsPage() {
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-white p-6 shadow-2xl">
+          <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[92vh] w-full rounded-t-3xl border-t bg-white p-5 pb-8 shadow-2xl overflow-y-auto sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:border">
             <div className="flex items-start justify-between">
               <div>
                 <Dialog.Title className="text-xl font-bold">

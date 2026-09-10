@@ -39,8 +39,8 @@ export function ImportDetailDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-white p-6 shadow-2xl">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-xs" />
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[92vh] w-full rounded-t-3xl border-t bg-white p-4 pb-8 shadow-2xl overflow-y-auto sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:border">
           <div className="flex items-start justify-between border-b pb-3">
             <div>
               <div className="flex items-center gap-2">

@@ -560,6 +560,66 @@ export function CustomerDetailPage({ id }: { id: string }) {
                 <DataTable
                   rows={customer.invoices}
                   rowKey={(i) => i.id}
+                  renderMobileCard={(i) => (
+                    <div className="rounded-2xl border bg-white p-4 shadow-xs transition active:scale-[0.99]">
+                      <div className="flex items-start justify-between gap-2 border-b pb-3">
+                        <div>
+                          <button
+                            className="font-mono text-base font-bold text-primary hover:underline text-left block"
+                            onClick={() => setViewing(i)}
+                          >
+                            {i.invoiceCode}
+                          </button>
+                          <span className="text-[11px] text-muted-foreground">
+                            {formatDateTime(i.completedAt ?? i.createdAt)}
+                          </span>
+                        </div>
+                        <StatusBadge status={i.exportStatus} />
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <div>
+                          <span className="text-[11px] font-medium text-muted-foreground block">
+                            Tổng tiền đơn
+                          </span>
+                          <strong className="text-base font-bold text-foreground">
+                            {formatVnd(i.totalAmount)}
+                          </strong>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[11px] font-medium text-muted-foreground block">
+                            Thanh toán
+                          </span>
+                          {i.exportStatus === "CANCELLED" ? (
+                            <span className="text-xs text-muted-foreground">Đã hủy</span>
+                          ) : i.exportStatus === "EDITING" ? (
+                            <span className="text-xs text-muted-foreground">Lưu nháp</span>
+                          ) : i.paymentStatus === "PAID" ? (
+                            <span className="text-xs font-semibold text-emerald-600">Đã trả đủ</span>
+                          ) : i.paymentStatus === "PARTIAL" ? (
+                            <span className="text-xs font-medium text-amber-600">
+                              Còn nợ: {formatVnd(i.outstandingAmount ?? 0)}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-medium text-danger">
+                              Chưa trả ({formatVnd(i.outstandingAmount ?? i.totalAmount)})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 border-t pt-2.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full h-8 text-xs font-medium"
+                          onClick={() => setViewing(i)}
+                        >
+                          Xem chi tiết hóa đơn
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   columns={[
                     {
                       key: "code",

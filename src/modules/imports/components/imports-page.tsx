@@ -11,6 +11,7 @@ import {
   Plus,
   Search,
   Trash2,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Page } from "@/components/ui/page";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatDateTime, formatVnd } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { CreateImportDialog } from "@/modules/imports/components/create-import-dialog";
 import { ImportDetailDialog } from "@/modules/imports/components/import-detail-dialog";
 import {
@@ -128,36 +130,74 @@ export function ImportsPage() {
       }
     >
       {/* Bộ lọc và tìm kiếm */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative max-w-xl flex-1">
-          <Search className="absolute left-3 top-3.5 size-4 text-muted-foreground" />
+      <div className="space-y-3">
+        {/* Search bar */}
+        <div className="relative w-full">
+          <Search className="absolute left-3.5 top-3 size-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo mã phiếu nhập, mã hoặc tên sản phẩm..."
-            className="pl-10"
+            placeholder="Tìm mã phiếu, mã hoặc tên sản phẩm..."
+            className="pl-10 h-10 rounded-xl bg-white shadow-2xs"
           />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-2.5 rounded-full p-1 text-muted-foreground hover:bg-muted"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
         </div>
 
-        <Select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value as ImportStatus | "");
-            setPage(1);
-          }}
-          className="sm:w-52"
-        >
+        {/* Desktop Select Dropdown */}
+        <div className="hidden sm:block">
+          <Select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value as ImportStatus | "");
+              setPage(1);
+            }}
+            className="sm:w-52"
+          >
+            {statusFilterOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        {/* Mobile Horizontal Filter Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs sm:hidden">
           {statusFilterOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                setStatusFilter(opt.value);
+                setPage(1);
+              }}
+              className={cn(
+                "shrink-0 rounded-full px-3 py-1.5 font-medium transition active:scale-95",
+                statusFilter === opt.value
+                  ? "bg-primary text-white shadow-xs"
+                  : "bg-white text-muted-foreground border hover:bg-muted",
+              )}
+            >
               {opt.label}
-            </option>
+            </button>
           ))}
-        </Select>
+        </div>
       </div>
 
       {/* Content */}
       {importsQuery.isLoading ? (
-        <div className="h-64 rounded-2xl skeleton" />
+        <div className="space-y-3">
+          <div className="h-28 rounded-2xl skeleton" />
+          <div className="h-28 rounded-2xl skeleton" />
+          <div className="h-28 rounded-2xl skeleton" />
+        </div>
       ) : importsQuery.isError ? (
         <div className="rounded-2xl border bg-danger-soft p-5 text-danger">
           Không thể tải danh sách phiếu nhập kho.{" "}
@@ -193,6 +233,146 @@ export function ImportsPage() {
           <DataTable
             rows={items}
             rowKey={(row) => row.id}
+            renderMobileCard={(row) => {
+              const lineList = row.items;
+              const totalQty = lineList.reduce((sum, l) => sum + l.importQuantity, 0);
+
+              return (
+                <div className="rounded-2xl border bg-white p-4 shadow-xs transition active:scale-[0.99]">
+                  {/* Header: Mã phiếu & Status */}
+                  <div className="flex items-start justify-between gap-2 border-b pb-3">
+                    <div>
+                      <button
+                        onClick={() => setViewingItem(row)}
+                        className="font-mono text-base font-bold text-primary hover:underline text-left block"
+                      >
+                        {row.importCode}
+                      </button>
+                      <span className="text-[11px] text-muted-foreground">
+                        {formatDateTime(row.createdAt)}
+                      </span>
+                    </div>
+                    <StatusBadge status={row.status} />
+                  </div>
+
+                  {/* Body: Sản phẩm nhập + Số lượng + Tổng tiền */}
+                  <div className="mt-3 space-y-2">
+                    <div className="text-sm">
+                      {lineList.length === 1 && lineList[0]?.product ? (
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {lineList[0].product.productName}
+                          </p>
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {lineList[0].product.productCode}
+                          </span>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="font-semibold text-foreground line-clamp-1">
+                            {lineList
+                              .map((i) => i.product?.productName)
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .join(", ")}
+                            {lineList.length > 2 ? ` (+${lineList.length - 2})` : ""}
+                          </p>
+                          <span className="text-xs font-medium text-primary">
+                            Gồm {lineList.length} mặt hàng nhập
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="rounded-xl bg-muted/40 p-2.5">
+                        <span className="text-[11px] font-medium text-muted-foreground block">
+                          Tổng số lượng
+                        </span>
+                        <strong className="text-sm font-bold text-foreground">
+                          {totalQty}{" "}
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {lineList.length === 1 && lineList[0]?.product
+                              ? lineList[0].product.productUnit
+                              : "đơn vị"}
+                          </span>
+                        </strong>
+                      </div>
+
+                      <div className="rounded-xl bg-muted/40 p-2.5">
+                        <span className="text-[11px] font-medium text-muted-foreground block">
+                          Tổng tiền nhập
+                        </span>
+                        <strong className="text-sm font-bold text-primary tabular tracking-tight">
+                          {formatVnd(row.totalAmount)}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer: Action Bar */}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-1.5 border-t pt-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewingItem(row)}
+                        className="h-8 gap-1 text-xs"
+                      >
+                        <Eye className="size-3.5" />
+                        Xem
+                      </Button>
+
+                      {row.status === "DRAFT" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingItem(row);
+                              setOpenCreate(true);
+                            }}
+                            className="h-8 gap-1 text-xs"
+                          >
+                            <Pencil className="size-3.5" />
+                            Sửa
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => setCompletingId(row.id)}
+                            className="h-8 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                          >
+                            <CheckCircle2 className="size-3.5" />
+                            Duyệt
+                          </Button>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {row.status !== "CANCELLED" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCancellingId(row.id)}
+                          className="h-8 text-xs text-amber-600 hover:bg-amber-50"
+                        >
+                          Hủy
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeletingId(row.id)}
+                        className="h-8 text-xs text-danger hover:bg-danger-soft"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            }}
             columns={[
               {
                 key: "code",
@@ -340,8 +520,8 @@ export function ImportsPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setCancellingId(row.id)}
-                        title="Hủy phiếu nhập"
-                        className="text-danger hover:text-danger"
+                        title="Hủy phiếu"
+                        className="text-muted-foreground hover:text-danger"
                       >
                         <Ban className="size-4" />
                       </Button>
@@ -362,26 +542,47 @@ export function ImportsPage() {
             ]}
           />
 
+          {/* Floating Action Button for Mobile */}
+          <div className="fixed bottom-20 right-4 z-30 lg:hidden">
+            <button
+              onClick={() => {
+                setEditingItem(null);
+                setOpenCreate(true);
+              }}
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white shadow-xl transition active:scale-95"
+            >
+              <Plus className="size-5" />
+              <span>Nhập kho</span>
+            </button>
+          </div>
+
           {/* Phân trang */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
             <span>
-              {meta ? `${meta.total} phiếu nhập kho` : "0 phiếu"}
+              {meta ? `${meta.total} phiếu nhập` : "0 phiếu"}
             </span>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage((v) => v - 1)}
+                className="h-9 px-3 text-xs"
               >
                 <ChevronLeft className="size-4" />
+                <span className="hidden sm:inline">Trước</span>
               </Button>
+              <span className="text-xs font-medium px-2">
+                Trang {page} / {meta?.totalPages ?? 1}
+              </span>
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={page >= (meta?.totalPages ?? 1)}
                 onClick={() => setPage((v) => v + 1)}
+                className="h-9 px-3 text-xs"
               >
+                <span className="hidden sm:inline">Sau</span>
                 <ChevronRight className="size-4" />
               </Button>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Boxes, Hash, Ruler, Tag } from "lucide-react";
+import { ArrowLeft, Boxes, Hash, Ruler, Tag } from "lucide-react";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Page } from "@/components/ui/page";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -46,6 +47,11 @@ export function ProductDetailPage({ id }: { id: string }) {
     <Page
       title="Chi tiết sản phẩm"
       description="Thông tin sản phẩm và tình trạng tồn kho."
+      actions={
+        <Link className="inline-flex items-center gap-1 text-sm text-primary hover:underline" href="/admin/products">
+          <ArrowLeft className="size-4" /> Danh sách sản phẩm
+        </Link>
+      }
     >
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         <Card className="text-center">

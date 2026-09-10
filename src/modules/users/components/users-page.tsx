@@ -105,17 +105,30 @@ export function UsersPage() {
         </Button>
       }
     >
-      <div className="relative max-w-xl">
-        <Search className="absolute left-3 top-3.5 size-4 text-muted-foreground" />
+      <div className="relative w-full max-w-xl">
+        <Search className="absolute left-3.5 top-3 size-4 text-muted-foreground" />
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Tìm theo email hoặc tên hiển thị"
-          className="pl-10"
+          placeholder="Tìm theo email hoặc tên hiển thị..."
+          className="pl-10 h-10 rounded-xl bg-white shadow-2xs"
         />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-2.5 rounded-full p-1 text-muted-foreground hover:bg-muted"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
       </div>
+
       {users.isLoading ? (
-        <div className="h-56 rounded-2xl skeleton" />
+        <div className="space-y-3">
+          <div className="h-28 rounded-2xl skeleton" />
+          <div className="h-28 rounded-2xl skeleton" />
+          <div className="h-28 rounded-2xl skeleton" />
+        </div>
       ) : users.isError ? (
         <div className="rounded-2xl border bg-danger-soft p-5 text-danger">
           Không thể tải người dùng.{" "}
@@ -128,6 +141,67 @@ export function UsersPage() {
           <DataTable
             rows={users.data?.data ?? []}
             rowKey={(row) => row.id}
+            renderMobileCard={(row) => (
+              <div className="rounded-2xl border bg-white p-4 shadow-xs transition active:scale-[0.99]">
+                <div className="flex items-start justify-between gap-3 border-b pb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="grid size-11 place-items-center rounded-full bg-secondary font-bold text-primary text-sm">
+                      {initials(row.displayName ?? row.email)}
+                    </span>
+                    <div>
+                      <p className="font-bold text-base text-foreground leading-tight">
+                        {row.displayName || row.fullName || "Chưa đặt tên"}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{row.email}</p>
+                    </div>
+                  </div>
+                  <StatusBadge status={row.status} />
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-xl bg-muted/40 p-2">
+                    <span className="text-[11px] font-medium text-muted-foreground block">
+                      Số điện thoại
+                    </span>
+                    <span className="font-mono font-medium text-foreground">
+                      {row.phoneNumber || "—"}
+                    </span>
+                  </div>
+                  <div className="rounded-xl bg-muted/40 p-2">
+                    <span className="text-[11px] font-medium text-muted-foreground block">
+                      Vai trò
+                    </span>
+                    <span className="font-semibold text-primary">{row.role}</span>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between border-t pt-2.5">
+                  <span className="text-[11px] text-muted-foreground">
+                    Tạo: {formatDateTime(row.createdAt)}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => showForm(row)}
+                      className="h-8 gap-1.5 text-xs font-medium"
+                    >
+                      <UserRoundPen className="size-3.5" />
+                      Sửa
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => remove(row.id)}
+                      className="h-8 gap-1.5 text-xs font-medium text-danger hover:bg-danger-soft"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Xóa
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             columns={[
               {
                 key: "user",
@@ -192,24 +266,43 @@ export function UsersPage() {
               },
             ]}
           />
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+
+          {/* Floating Action Button for Mobile */}
+          <div className="fixed bottom-20 right-4 z-30 lg:hidden">
+            <button
+              onClick={() => showForm()}
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white shadow-xl transition active:scale-95"
+            >
+              <Plus className="size-5" />
+              <span>Người dùng</span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
             <span>{users.data?.meta.total ?? 0} người dùng</span>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage((value) => value - 1)}
+                className="h-9 px-3 text-xs"
               >
-                <ChevronLeft />
+                <ChevronLeft className="size-4" />
+                <span className="hidden sm:inline">Trước</span>
               </Button>
+              <span className="text-xs font-medium px-2">
+                Trang {page} / {users.data?.meta.totalPages ?? 1}
+              </span>
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={page >= (users.data?.meta.totalPages ?? 1)}
                 onClick={() => setPage((value) => value + 1)}
+                className="h-9 px-3 text-xs"
               >
-                <ChevronRight />
+                <span className="hidden sm:inline">Sau</span>
+                <ChevronRight className="size-4" />
               </Button>
             </div>
           </div>

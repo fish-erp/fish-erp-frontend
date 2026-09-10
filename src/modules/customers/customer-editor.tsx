@@ -15,9 +15,9 @@ export function CustomerEditor({ customer, initialSearch = "", onClose, onSaved 
   const [pending, setPending] = useState(false);
   const invalidate = useInvalidateCustomers();
   return <Dialog.Root open onOpenChange={open => { if (!open && !pending) onClose(); }}><Dialog.Portal>
-    <Dialog.Overlay className="fixed inset-0 z-[60] bg-foreground/40" />
-    <Dialog.Content className="fixed left-1/2 top-1/2 z-[60] max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-2xl border bg-white p-6 shadow-2xl">
-      <div className="flex items-center justify-between"><Dialog.Title className="text-xl font-bold">{customer ? "Sửa khách hàng" : "Thêm khách hàng"}</Dialog.Title><Dialog.Close disabled={pending} aria-label="Đóng" className="p-2"><X /></Dialog.Close></div>
+    <Dialog.Overlay className="fixed inset-0 z-[60] bg-foreground/40 backdrop-blur-xs" />
+    <Dialog.Content className="fixed inset-x-0 bottom-0 z-[60] max-h-[92vh] w-full rounded-t-3xl border-t bg-white p-5 pb-8 shadow-2xl overflow-y-auto sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:border">
+      <div className="flex items-center justify-between"><Dialog.Title className="text-lg sm:text-xl font-bold">{customer ? "Sửa khách hàng" : "Thêm khách hàng"}</Dialog.Title><Dialog.Close disabled={pending} aria-label="Đóng" className="p-2 rounded-full hover:bg-muted"><X className="size-5" /></Dialog.Close></div>
       <Dialog.Description className="mt-2 text-sm text-muted-foreground">Số điện thoại dùng để nhận diện khách, tránh trùng hồ sơ.</Dialog.Description>
       <form className="mt-5 space-y-4" onSubmit={async event => {
         event.preventDefault(); if (pending) return; setPending(true);

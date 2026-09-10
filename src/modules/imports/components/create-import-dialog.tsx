@@ -244,15 +244,15 @@ export function CreateImportDialog({
       <Dialog.Root open={open} onOpenChange={onOpenChange}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[94vh] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-white p-6 shadow-2xl">
+          <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[92vh] w-full rounded-t-3xl border-t bg-white p-4 pb-6 shadow-2xl overflow-y-auto sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[94vh] sm:w-[calc(100%-2rem)] sm:max-w-4xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:border">
             <div className="flex items-start justify-between border-b pb-3">
               <div>
-                <Dialog.Title className="flex items-center gap-2 text-xl font-bold text-primary">
-                  <PackagePlus className="size-6" />
+                <Dialog.Title className="flex items-center gap-2 text-lg sm:text-xl font-bold text-primary">
+                  <PackagePlus className="size-5 sm:size-6" />
                   {editingImport ? "Chỉnh sửa phiếu nhập kho" : "Tạo phiếu nhập kho"}
                 </Dialog.Title>
                 <Dialog.Description className="mt-1 text-xs text-muted-foreground">
-                  Nhập một hoặc nhiều mặt hàng vào kho. Bạn có thể bấm nút &quot;+ Thêm sản phẩm&quot; để thêm dòng hàng.
+                  Nhập một hoặc nhiều mặt hàng vào kho. Tồn kho tăng khi hoàn thành.
                 </Dialog.Description>
               </div>
               <Dialog.Close className="rounded-lg p-2 hover:bg-muted">
@@ -432,57 +432,59 @@ export function CreateImportDialog({
                 </div>
               </div>
 
-              {/* Tóm tắt tổng tiền phiếu nhập */}
-              <div className="flex flex-wrap items-center justify-between rounded-xl bg-primary/10 border border-primary/20 p-4">
-                <div className="space-y-0.5">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Tổng kết phiếu nhập kho
+              {/* Tóm tắt tổng tiền phiếu nhập & Nút hành động */}
+              <div className="sticky bottom-0 z-10 -mx-4 -mb-6 mt-6 space-y-3 border-t bg-white/95 p-4 backdrop-blur shadow-[0_-4px_12px_rgba(0,0,0,0.05)] sm:static sm:mx-0 sm:mb-0 sm:mt-0 sm:space-y-4 sm:border-0 sm:p-0 sm:shadow-none">
+                <div className="flex flex-wrap items-center justify-between rounded-xl bg-primary/10 border border-primary/20 p-3 sm:p-4">
+                  <div className="space-y-0.5">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Tổng kết phiếu nhập
+                    </div>
+                    <div className="text-xs sm:text-sm text-foreground">
+                      <strong>{lineItems.length} mặt hàng</strong> · Tổng SL:{" "}
+                      <strong>{totalQuantity}</strong>
+                    </div>
                   </div>
-                  <div className="text-sm text-foreground">
-                    Số mặt hàng: <strong>{lineItems.length} sản phẩm</strong> · Tổng số lượng:{" "}
-                    <strong>{totalQuantity}</strong>
+                  <div className="text-right">
+                    <div className="text-[11px] text-muted-foreground">Tổng thanh toán:</div>
+                    <div className="text-lg sm:text-2xl font-bold font-mono text-primary">
+                      {formatVnd(totalAmount)}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground">Tổng giá trị thanh toán:</div>
-                  <div className="text-2xl font-bold font-mono text-primary">
-                    {formatVnd(totalAmount)}
-                  </div>
-                </div>
-              </div>
 
-              {/* Nút hành động */}
-              <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row border-t pt-4">
-                <Dialog.Close asChild>
-                  <Button type="button" variant="outline" disabled={isSubmitting}>
-                    Hủy & Đóng
+                {/* Nút hành động */}
+                <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">
+                  <Dialog.Close asChild>
+                    <Button type="button" variant="outline" className="h-10 text-xs sm:text-sm" disabled={isSubmitting}>
+                      Hủy & Đóng
+                    </Button>
+                  </Dialog.Close>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSave("DRAFT")}
+                    disabled={isSubmitting}
+                    className="h-10 text-xs sm:text-sm gap-1.5"
+                  >
+                    <FileText className="size-4" />
+                    Lưu nháp
                   </Button>
-                </Dialog.Close>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleSave("DRAFT")}
-                  disabled={isSubmitting}
-                  className="gap-1.5"
-                >
-                  <FileText className="size-4" />
-                  Lưu phiếu nháp
-                </Button>
-
-                <Button
-                  type="button"
-                  onClick={() => handleSave("COMPLETED")}
-                  disabled={isSubmitting}
-                  className="gap-1.5"
-                >
-                  {isSubmitting ? (
-                    <LoaderCircle className="size-4 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="size-4" />
-                  )}
-                  Hoàn thành nhập kho (+ Tồn kho)
-                </Button>
+                  <Button
+                    type="button"
+                    onClick={() => handleSave("COMPLETED")}
+                    disabled={isSubmitting}
+                    className="h-10 text-xs sm:text-sm gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                  >
+                    {isSubmitting ? (
+                      <LoaderCircle className="size-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="size-4" />
+                    )}
+                    Hoàn thành (+ Kho)
+                  </Button>
+                </div>
               </div>
             </div>
           </Dialog.Content>

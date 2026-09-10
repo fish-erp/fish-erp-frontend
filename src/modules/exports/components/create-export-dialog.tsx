@@ -134,9 +134,9 @@ export function CreateExportDialog({
   return <Dialog.Root open={open} onOpenChange={value => { if (!pending) onOpenChange(value); }}>
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm" />
-      <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[94vh] w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-white p-6 shadow-2xl">
+      <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[92vh] w-full rounded-t-3xl border-t bg-white p-4 pb-6 shadow-2xl overflow-y-auto sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[94vh] sm:w-[calc(100%-2rem)] sm:max-w-4xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:border">
         <div className="flex items-start justify-between border-b pb-3">
-          <div><Dialog.Title className="flex items-center gap-2 text-xl font-bold text-primary"><PackageMinus />{editing ? "Chỉnh sửa phiếu xuất" : "Tạo phiếu xuất hàng"}</Dialog.Title><Dialog.Description className="mt-1 text-sm text-muted-foreground">Chọn nhiều sản phẩm; tồn kho chỉ bị trừ khi hoàn tất phiếu.</Dialog.Description></div>
+          <div><Dialog.Title className="flex items-center gap-2 text-lg sm:text-xl font-bold text-primary"><PackageMinus className="size-5 sm:size-6" />{editing ? "Chỉnh sửa phiếu xuất" : "Tạo phiếu xuất hàng"}</Dialog.Title><Dialog.Description className="mt-1 text-xs sm:text-sm text-muted-foreground">Chọn sản phẩm; tồn kho chỉ bị trừ khi hoàn tất phiếu.</Dialog.Description></div>
           <Dialog.Close className="rounded-lg p-2 hover:bg-muted"><X className="size-5" /></Dialog.Close>
         </div>
 
@@ -233,12 +233,12 @@ export function CreateExportDialog({
           <p className="mt-2 text-sm">Còn nợ đơn này: <strong>{formatVnd(paidInFull ? 0 : Math.max(0, totalAmount - Number(paidAmount)))}</strong></p>
           <p className="mt-1 text-xs text-muted-foreground">Phiếu nháp chưa ghi nhận thu tiền. Giá và công nợ được chốt khi hoàn tất.</p>
         </section>
-        <div className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="sticky bottom-0 z-10 -mx-4 -mb-6 mt-6 flex flex-col gap-3 border-t bg-white/95 p-4 backdrop-blur shadow-[0_-4px_12px_rgba(0,0,0,0.05)] sm:static sm:mx-0 sm:mb-0 sm:mt-5 sm:flex-row sm:items-center sm:justify-between sm:border-t sm:p-0 sm:pt-4 sm:shadow-none">
           <div className="text-sm">
             <span className="text-muted-foreground">Tổng {totalQuantity} đơn vị · </span>
             {exportType === "DELIVERY" && effectiveShippingFee > 0 ? (
               <span>
-                Tiền hàng: <strong>{formatVnd(productsTotal)}</strong> + Ship: <strong>{formatVnd(effectiveShippingFee)}</strong> ={" "}
+                Hàng: <strong>{formatVnd(productsTotal)}</strong> + Ship: <strong>{formatVnd(effectiveShippingFee)}</strong> ={" "}
                 <strong className="text-primary text-base">{formatVnd(totalAmount)}</strong>
               </span>
             ) : (
@@ -246,8 +246,13 @@ export function CreateExportDialog({
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" disabled={pending} onClick={() => void save("EDITING")}>Lưu nháp</Button>
-            <Button disabled={pending} onClick={() => void save("COMPLETED")}>{pending && <LoaderCircle className="animate-spin" />}Hoàn tất & xuất kho</Button>
+            <Button variant="outline" className="flex-1 sm:flex-initial h-10" disabled={pending} onClick={() => void save("EDITING")}>
+              Lưu nháp
+            </Button>
+            <Button className="flex-1 sm:flex-initial h-10 gap-1.5" disabled={pending} onClick={() => void save("COMPLETED")}>
+              {pending && <LoaderCircle className="animate-spin size-4" />}
+              Xuất kho ngay
+            </Button>
           </div>
         </div>
       </Dialog.Content>

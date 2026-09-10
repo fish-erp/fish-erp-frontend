@@ -51,16 +51,126 @@ export function ReportsPage() {
     }
   };
 
-  return <Page title="Báo cáo và xuất Excel" description="Theo dõi nhập – xuất – tồn và bán hàng theo khoảng ngày.">
-    <Card className="p-5">
-      <div className="flex items-center gap-2"><CalendarRange className="size-5 text-primary" /><h2 className="font-bold">Khoảng thời gian</h2></div>
-      <div className="mt-4 flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => applyPreset("today")}>Hôm nay</Button><Button variant="outline" size="sm" onClick={() => applyPreset("week")}>Tuần này</Button><Button variant="outline" size="sm" onClick={() => applyPreset("month")}>Tháng này</Button><Button variant="outline" size="sm" onClick={() => applyPreset("year")}>Năm nay</Button></div>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2"><label><span className="mb-1 block text-sm font-medium">Từ ngày</span><Input type="date" value={from} max={to} onChange={(event) => setFrom(event.target.value)} /></label><label><span className="mb-1 block text-sm font-medium">Đến ngày</span><Input type="date" value={to} min={from} onChange={(event) => setTo(event.target.value)} /></label></div>
-      <label className="mt-5 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4"><input type="checkbox" checked={includePrice} onChange={(event) => setIncludePrice(event.target.checked)} className="mt-0.5 size-4 accent-primary" /><span><strong className="block text-sm">Hiển thị giá trong file</strong><span className="text-xs text-muted-foreground">Mặc định tắt để có thể gửi file số lượng cho người khác mà không lộ giá.</span></span></label>
-    </Card>
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card className="p-5"><FileSpreadsheet className="size-8 text-primary" /><h2 className="mt-3 text-lg font-bold">Nhập – xuất – tồn</h2><p className="mt-1 text-sm text-muted-foreground">Gồm sheet tổng hợp tồn đầu/cuối kỳ và sheet chi tiết biến động.</p><Button className="mt-5 w-full" disabled={Boolean(downloading)} onClick={() => void download("inventory")}>{downloading === "inventory" ? <LoaderCircle className="animate-spin" /> : <Download className="size-4" />}Tải file nhập – xuất – tồn</Button></Card>
-      <Card className="p-5"><FileSpreadsheet className="size-8 text-primary" /><h2 className="mt-3 text-lg font-bold">Bán hàng</h2><p className="mt-1 text-sm text-muted-foreground">Danh sách từng sản phẩm trong các hóa đơn đã hoàn thành.</p><Button className="mt-5 w-full" disabled={Boolean(downloading)} onClick={() => void download("sales")}>{downloading === "sales" ? <LoaderCircle className="animate-spin" /> : <Download className="size-4" />}Tải file bán hàng</Button></Card>
-    </div>
-  </Page>;
+  return (
+    <Page title="Báo cáo và xuất Excel" description="Theo dõi nhập – xuất – tồn và bán hàng theo khoảng ngày.">
+      <Card className="p-4 sm:p-6 shadow-xs rounded-2xl">
+        <div className="flex items-center gap-2">
+          <CalendarRange className="size-5 text-primary" />
+          <h2 className="font-bold text-base">Khoảng thời gian báo cáo</h2>
+        </div>
+
+        {/* Quick Date Presets */}
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => applyPreset("today")}>
+            Hôm nay
+          </Button>
+          <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => applyPreset("week")}>
+            Tuần này
+          </Button>
+          <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => applyPreset("month")}>
+            Tháng này
+          </Button>
+          <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => applyPreset("year")}>
+            Năm nay
+          </Button>
+        </div>
+
+        {/* Date pickers */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">Từ ngày</span>
+            <Input
+              type="date"
+              value={from}
+              max={to}
+              onChange={(event) => setFrom(event.target.value)}
+              className="h-10 rounded-xl"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-muted-foreground">Đến ngày</span>
+            <Input
+              type="date"
+              value={to}
+              min={from}
+              onChange={(event) => setTo(event.target.value)}
+              className="h-10 rounded-xl"
+            />
+          </label>
+        </div>
+
+        {/* Checkbox option */}
+        <label className="mt-4 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3.5 transition active:scale-[0.99]">
+          <input
+            type="checkbox"
+            checked={includePrice}
+            onChange={(event) => setIncludePrice(event.target.checked)}
+            className="mt-0.5 size-4 rounded accent-primary"
+          />
+          <div>
+            <strong className="block text-sm font-semibold">Hiển thị giá trong file Excel</strong>
+            <span className="text-xs text-muted-foreground">
+              Mặc định tắt để có thể gửi file số lượng cho người khác mà không để lộ giá nhập/bán.
+            </span>
+          </div>
+        </label>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="p-5 rounded-2xl shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <FileSpreadsheet className="size-6" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">Nhập – xuất – tồn</h2>
+              <p className="text-xs text-muted-foreground">Tồn đầu kỳ, nhập/xuất và tồn cuối kỳ</p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Gồm sheet tổng hợp tồn kho và sheet chi tiết biến động theo ngày.
+          </p>
+          <Button
+            className="mt-4 w-full h-11 rounded-xl gap-2 font-semibold"
+            disabled={Boolean(downloading)}
+            onClick={() => void download("inventory")}
+          >
+            {downloading === "inventory" ? (
+              <LoaderCircle className="animate-spin size-4" />
+            ) : (
+              <Download className="size-4" />
+            )}
+            Tải file Nhập – Xuất – Tồn
+          </Button>
+        </Card>
+
+        <Card className="p-5 rounded-2xl shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
+              <FileSpreadsheet className="size-6" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">Báo cáo bán hàng</h2>
+              <p className="text-xs text-muted-foreground">Doanh thu và danh sách mặt hàng đã bán</p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Danh sách chi tiết từng sản phẩm trong các hóa đơn đã hoàn thành.
+          </p>
+          <Button
+            className="mt-4 w-full h-11 rounded-xl gap-2 font-semibold"
+            disabled={Boolean(downloading)}
+            onClick={() => void download("sales")}
+          >
+            {downloading === "sales" ? (
+              <LoaderCircle className="animate-spin size-4" />
+            ) : (
+              <Download className="size-4" />
+            )}
+            Tải file Bán hàng
+          </Button>
+        </Card>
+      </div>
+    </Page>
+  );
 }
