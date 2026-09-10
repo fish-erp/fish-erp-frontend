@@ -14,6 +14,14 @@ export interface ExportLineItem {
 }
 
 export interface ExportInvoice {
+  customerId: string | null;
+  paymentTracked: boolean;
+  plannedPaidAmount: number | null;
+  paidAmount: number | null;
+  outstandingAmount: number | null;
+  paymentStatus: "UNKNOWN" | "PAID" | "PARTIAL" | "UNPAID" | "DRAFT" | "CANCELLED";
+  reconciliationNote?: string | null;
+  payments: Array<{ id: string; amount: number; note: string | null; paidAt: string; createdBy: string; reversedAt: string | null; reversalReason: string | null }>;
   id: string;
   invoiceCode: string;
   exportType: ExportType;
@@ -32,6 +40,8 @@ export interface ExportInvoice {
 }
 
 export interface ExportInput {
+  customerId?: string | null;
+  paidAmount?: number | null;
   invoiceCode?: string;
   exportType?: ExportType;
   exportStatus?: ExportStatus;

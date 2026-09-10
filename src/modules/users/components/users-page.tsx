@@ -97,7 +97,7 @@ export function UsersPage() {
   return (
     <Page
       title="Quản lý người dùng"
-      description="Quản lý tài khoản và quyền truy cập Fish ERP."
+      description="Quản lý tài khoản và quyền truy cập HVG."
       actions={
         <Button onClick={() => showForm()}>
           <Plus />

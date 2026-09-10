@@ -17,6 +17,7 @@ export function useExportMutations() {
   const invalidate = () => {
     client.invalidateQueries({ queryKey: ["exports"] });
     client.invalidateQueries({ queryKey: ["products"] });
+    client.invalidateQueries({ queryKey: ["customers"] });
   };
   return {
     create: useMutation({ mutationFn: (input: ExportInput) => exportsService.create(input), onSuccess: invalidate }),

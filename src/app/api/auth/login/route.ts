@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       cache: "no-store",
     }).catch(() => undefined);
     return NextResponse.json(
-      { message: "Tài khoản không có quyền truy cập Fish ERP" },
+      { message: "Tài khoản không có quyền truy cập HVG" },
       { status: 403 },
     );
   }

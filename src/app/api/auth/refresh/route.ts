@@ -16,7 +16,7 @@ export async function POST() {
       cache: "no-store",
     }).catch(() => undefined);
     const response = NextResponse.json(
-      { message: "Tài khoản không có quyền truy cập Fish ERP" },
+      { message: "Tài khoản không có quyền truy cập HVG" },
       { status: 403 },
     );
     clearTokenCookies(response);

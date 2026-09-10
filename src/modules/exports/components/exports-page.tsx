@@ -20,6 +20,7 @@ import { Page } from "@/components/ui/page";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatDateTime, formatVnd } from "@/lib/format";
 import { CreateExportDialog } from "./create-export-dialog";
+import { PaymentSummary } from "./payment-panel";
 import { ExportDetailDialog } from "./export-detail-dialog";
 import { useExportMutations, useExports } from "../hooks/use-exports";
 import type { ExportInvoice, ExportStatus } from "../types/export";
@@ -117,7 +118,7 @@ export function ExportsPage() {
           <option value="CANCELLED">Đã hủy</option>
         </Select>
       </div>
-      {list.isLoading ? (
+      {list.isError ? <p role="alert" className="text-danger">Không tải được phiếu xuất. <button onClick={() => void list.refetch()}>Thử lại</button></p> : list.isLoading ? (
         <div className="h-64 rounded-2xl skeleton" />
       ) : rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-14 text-center">
@@ -183,6 +184,11 @@ export function ExportsPage() {
                   {formatVnd(row.totalAmount)}
                 </strong>
               ),
+            },
+            {
+              key: "payment",
+              label: "Thanh toán",
+              render: (row) => <PaymentSummary invoice={row} />,
             },
             {
               key: "note",
@@ -312,9 +318,9 @@ export function ExportsPage() {
         }
         description={
           action?.type === "complete"
-            ? "Tồn kho sẽ bị trừ ngay."
+            ? "Tồn kho sẽ bị trừ ngay và ghi nhận thanh toán theo thông tin lưu trong phiếu nháp."
             : action?.type === "cancel"
-              ? "Nếu phiếu đã hoàn thành, hàng sẽ được hoàn lại kho."
+              ? "Nếu phiếu đã hoàn thành, hàng sẽ được hoàn lại kho. Các khoản thu phải được hoàn/đảo trước trong chi tiết phiếu."
               : "Phiếu sẽ được xóa mềm."
         }
         confirmLabel="Xác nhận"
