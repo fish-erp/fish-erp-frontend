@@ -18,6 +18,8 @@ import { customerService, useCustomer, type CustomerPayment } from "./customers"
 
 export function CustomerDetailPage({ id }: { id: string }) {
   const [page, setPage] = useState(1);
+  const [paymentPage, setPaymentPage] = useState(1);
+  const PAYMENTS_PER_PAGE = 10;
   const [viewing, setViewing] = useState<ExportInvoice | null>(null);
 
   // Tab chuyển đổi: Thu nợ hoặc Nạp tiền trả trước
@@ -35,6 +37,15 @@ export function CustomerDetailPage({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const query = useCustomer(id, page);
   const customer = query.data;
+
+  // Dữ liệu phân trang lịch sử thu tiền (10 dòng/trang)
+  const allPayments = customer?.payments ?? [];
+  const totalPaymentPages = Math.max(1, Math.ceil(allPayments.length / PAYMENTS_PER_PAGE));
+  const currentPaymentPage = Math.min(paymentPage, totalPaymentPages);
+  const currentPayments = allPayments.slice(
+    (currentPaymentPage - 1) * PAYMENTS_PER_PAGE,
+    currentPaymentPage * PAYMENTS_PER_PAGE,
+  );
 
   // Tự động chọn tab Thu nợ nếu còn nợ, hoặc tab Nạp tiền nếu hết nợ
   useEffect(() => {
@@ -65,6 +76,7 @@ export function CustomerDetailPage({ id }: { id: string }) {
       toast.success(actionType === "DEBT" ? "Đã ghi nhận thu nợ thành công!" : "Đã nạp tiền trả trước thành công!");
       setAmount("");
       setNote("");
+      setPaymentPage(1);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["customers", id] }),
         queryClient.invalidateQueries({ queryKey: ["customers"] }),
@@ -394,17 +406,23 @@ export function CustomerDetailPage({ id }: { id: string }) {
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
                 <History className="size-5 text-primary" />
-                Lịch sử thu tiền ({customer.payments?.length ?? 0})
+                Lịch sử thu tiền ({allPayments.length})
               </h3>
+              {totalPaymentPages > 1 && (
+                <span className="text-xs text-muted-foreground">
+                  Trang {currentPaymentPage} / {totalPaymentPages}
+                </span>
+              )}
             </div>
 
-            {!customer.payments?.length ? (
+            {!allPayments.length ? (
               <p className="mt-4 rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                 Chưa có lịch sử thu tiền nào cho khách hàng này.
               </p>
             ) : (
-              <div className="mt-4 space-y-3">
-                {customer.payments.map((payment: CustomerPayment) => (
+              <>
+                <div className="mt-4 space-y-3">
+                  {currentPayments.map((payment: CustomerPayment) => (
                   <div
                     key={payment.id}
                     className={`rounded-xl border p-4 transition ${
@@ -490,7 +508,40 @@ export function CustomerDetailPage({ id }: { id: string }) {
                   </div>
                 ))}
               </div>
-            )}
+
+              {/* Phân trang lịch sử thu tiền (10 lịch sử / trang) */}
+              {totalPaymentPages > 1 && (
+                <div className="mt-4 flex flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    Hiển thị {(currentPaymentPage - 1) * PAYMENTS_PER_PAGE + 1} –{" "}
+                    {Math.min(currentPaymentPage * PAYMENTS_PER_PAGE, allPayments.length)} trong tổng số{" "}
+                    {allPayments.length} lần thu
+                  </p>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPaymentPage <= 1}
+                      onClick={() => setPaymentPage((p) => Math.max(1, p - 1))}
+                    >
+                      Trang trước
+                    </Button>
+                    <span className="px-1 text-xs font-medium text-muted-foreground">
+                      Trang {currentPaymentPage} / {totalPaymentPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPaymentPage >= totalPaymentPages}
+                      onClick={() => setPaymentPage((p) => Math.min(totalPaymentPages, p + 1))}
+                    >
+                      Trang sau
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           </div>
 
           {/* Danh sách đơn hàng */}

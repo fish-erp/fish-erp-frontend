@@ -49,6 +49,7 @@ export function CreateExportDialog({
   const [customer, setCustomer] = useState<(Partial<Customer> & Pick<Customer, "id" | "name" | "phoneNumber">) | null>(null);
   const [paidInFull, setPaidInFull] = useState(true);
   const [paidAmount, setPaidAmount] = useState<number | "">(0);
+  const [shippingFee, setShippingFee] = useState<number | "">(5000);
 
   useEffect(() => {
     if (!open) return;
@@ -56,6 +57,7 @@ export function CreateExportDialog({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setInvoiceCode(editing?.invoiceCode ?? "");
     setExportType(editing?.exportType ?? "AT_HOME");
+    setShippingFee(editing?.shippingFee ?? 5000);
     setCustomerName(editing?.customerName ?? "");
     setCustomerPhone(editing?.customerPhone ?? "");
     setCustomer(editing?.customerId ? { id: editing.customerId, name: editing.customerName ?? "Khách hàng", phoneNumber: editing.customerPhone ?? "" } : null);
@@ -99,6 +101,7 @@ export function CreateExportDialog({
     const input = {
       ...(invoiceCode.trim() ? { invoiceCode: invoiceCode.trim() } : {}),
       exportType,
+      shippingFee: effectiveShippingFee,
       exportStatus,
       customerId: customer?.id ?? null,
       paidAmount: paidInFull ? totalAmount : Number(paidAmount),
@@ -124,7 +127,9 @@ export function CreateExportDialog({
 
   const pending = mutations.create.isPending || mutations.update.isPending;
   const totalQuantity = lines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
-  const totalAmount = lines.reduce((sum, line) => sum + (Number(line.quantity) || 0) * (line.product?.productPrice ?? 0), 0);
+  const productsTotal = lines.reduce((sum, line) => sum + (Number(line.quantity) || 0) * (line.product?.productPrice ?? 0), 0);
+  const effectiveShippingFee = exportType === "DELIVERY" ? (Number(shippingFee) || 0) : 0;
+  const totalAmount = productsTotal + effectiveShippingFee;
 
   return <Dialog.Root open={open} onOpenChange={value => { if (!pending) onOpenChange(value); }}>
     <Dialog.Portal>
@@ -137,10 +142,46 @@ export function CreateExportDialog({
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <label><span className="mb-1 block text-xs font-semibold">Mã phiếu (tùy chọn)</span><Input value={invoiceCode} onChange={(event) => setInvoiceCode(event.target.value)} placeholder="Tự sinh INV-..." /></label>
-          <label><span className="mb-1 block text-xs font-semibold">Kiểu xuất</span><Select value={exportType} onChange={(event) => setExportType(event.target.value as ExportType)}><option value="AT_HOME">Bán tại nhà</option><option value="DELIVERY">Giao hàng</option></Select></label>
+          <label>
+            <span className="mb-1 block text-xs font-semibold">Kiểu xuất</span>
+            <Select
+              value={exportType}
+              onChange={(event) => {
+                const nextType = event.target.value as ExportType;
+                setExportType(nextType);
+                if (nextType === "DELIVERY" && (shippingFee === "" || shippingFee === 0)) {
+                  setShippingFee(5000);
+                }
+              }}
+            >
+              <option value="AT_HOME">Bán tại nhà</option>
+              <option value="DELIVERY">Giao hàng</option>
+            </Select>
+          </label>
           <div className="sm:col-span-2"><CustomerPicker selected={customer} disabled={pending} onSelect={c => { setCustomer(c); setCustomerName(c?.name ?? ""); setCustomerPhone(c?.phoneNumber ?? ""); if (c?.address) setDeliveryAddress(c.address); }} /></div>
           {!customer && customerName && <p className="text-xs text-muted-foreground sm:col-span-2">Thông tin phiếu cũ: {customerName} · {customerPhone}. Chọn hồ sơ khách để theo dõi công nợ.</p>}
-          {exportType === "DELIVERY" && <label className="sm:col-span-2"><span className="mb-1 block text-xs font-semibold">Địa chỉ giao hàng</span><Input value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} /></label>}
+          {exportType === "DELIVERY" && (
+            <>
+              <label className="sm:col-span-1"><span className="mb-1 block text-xs font-semibold">Địa chỉ giao hàng</span><Input value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} /></label>
+              <label className="sm:col-span-1">
+                <span className="mb-1 block text-xs font-semibold">Tiền ship (₫)</span>
+                <Input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={shippingFee}
+                  disabled={pending}
+                  placeholder="5000"
+                  onChange={(event) => setShippingFee(event.target.value === "" ? "" : Number(event.target.value))}
+                />
+                {Number(shippingFee) > 0 && (
+                  <p className="mt-1 text-xs font-semibold text-primary">
+                    👉 {formatMoneyPreview(Number(shippingFee))}
+                  </p>
+                )}
+              </label>
+            </>
+          )}
           <label className="sm:col-span-2"><span className="mb-1 block text-xs font-semibold">Ghi chú chung</span><Textarea value={exportNote} onChange={(event) => setExportNote(event.target.value)} /></label>
         </div>
 
@@ -192,7 +233,23 @@ export function CreateExportDialog({
           <p className="mt-2 text-sm">Còn nợ đơn này: <strong>{formatVnd(paidInFull ? 0 : Math.max(0, totalAmount - Number(paidAmount)))}</strong></p>
           <p className="mt-1 text-xs text-muted-foreground">Phiếu nháp chưa ghi nhận thu tiền. Giá và công nợ được chốt khi hoàn tất.</p>
         </section>
-        <div className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between"><div className="text-sm"><span className="text-muted-foreground">Tổng {totalQuantity} đơn vị · </span><strong className="text-primary">{formatVnd(totalAmount)}</strong></div><div className="flex gap-2"><Button variant="outline" disabled={pending} onClick={() => void save("EDITING")}>Lưu nháp</Button><Button disabled={pending} onClick={() => void save("COMPLETED")}>{pending && <LoaderCircle className="animate-spin" />}Hoàn tất & xuất kho</Button></div></div>
+        <div className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Tổng {totalQuantity} đơn vị · </span>
+            {exportType === "DELIVERY" && effectiveShippingFee > 0 ? (
+              <span>
+                Tiền hàng: <strong>{formatVnd(productsTotal)}</strong> + Ship: <strong>{formatVnd(effectiveShippingFee)}</strong> ={" "}
+                <strong className="text-primary text-base">{formatVnd(totalAmount)}</strong>
+              </span>
+            ) : (
+              <strong className="text-primary text-base">{formatVnd(totalAmount)}</strong>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={pending} onClick={() => void save("EDITING")}>Lưu nháp</Button>
+            <Button disabled={pending} onClick={() => void save("COMPLETED")}>{pending && <LoaderCircle className="animate-spin" />}Hoàn tất & xuất kho</Button>
+          </div>
+        </div>
       </Dialog.Content>
     </Dialog.Portal>
   </Dialog.Root>;

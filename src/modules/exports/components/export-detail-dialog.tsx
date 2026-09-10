@@ -36,6 +36,11 @@ export function ExportDetailDialog({ invoice: initial, open, onOpenChange }: { i
         <p>
           <span className="text-muted-foreground">Tổng tiền:</span>{" "}
           <strong>{formatVnd(invoice.totalAmount)}</strong>
+          {invoice.shippingFee > 0 && (
+            <span className="block text-xs text-muted-foreground">
+              (Tiền hàng: {formatVnd(invoice.totalAmount - invoice.shippingFee)} + Ship: {formatVnd(invoice.shippingFee)})
+            </span>
+          )}
         </p>
         <p>
           <span className="text-muted-foreground">Đã trả lúc xuất:</span>{" "}
