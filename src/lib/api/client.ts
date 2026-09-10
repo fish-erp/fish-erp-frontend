@@ -65,6 +65,36 @@ class ApiClient {
   put<T>(endpoint: string, body?: unknown, options?: ApiClientOptions) { return this.request<T>(endpoint, "PUT", body, options); }
   patch<T>(endpoint: string, body?: unknown, options?: ApiClientOptions) { return this.request<T>(endpoint, "PATCH", body, options); }
   delete<T>(endpoint: string, options?: ApiClientOptions) { return this.request<T>(endpoint, "DELETE", undefined, options); }
+
+  async download(endpoint: string, options: ApiClientOptions = {}, retried = false): Promise<{ blob: Blob; fileName: string }> {
+    const { params, timeout = 120_000, signal: callerSignal } = options;
+    const controller = new AbortController();
+    const abort = () => controller.abort(callerSignal?.reason);
+    if (callerSignal?.aborted) abort(); else callerSignal?.addEventListener("abort", abort, { once: true });
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(this.buildUrl(endpoint, params), {
+        method: "GET",
+        headers: { Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+        credentials: "include",
+        signal: controller.signal,
+      });
+      if (response.status === 401 && !retried && await refreshSession()) {
+        return this.download(endpoint, options, true);
+      }
+      if (!response.ok) {
+        const data = await this.parseResponse(response);
+        const raw = typeof data === "object" && data !== null && "message" in data ? data.message : undefined;
+        throw new ApiError(typeof raw === "string" ? raw : "Không thể tải file báo cáo", response.status, data);
+      }
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const fileName = /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? "bao-cao.xlsx";
+      return { blob: await response.blob(), fileName };
+    } finally {
+      clearTimeout(timeoutId);
+      callerSignal?.removeEventListener("abort", abort);
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

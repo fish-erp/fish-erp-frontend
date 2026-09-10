@@ -6,9 +6,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  FileText,
-  PackageCheck,
-  PackagePlus,
   PackageSearch,
   Pencil,
   Plus,
@@ -18,7 +15,6 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { Input, Select } from "@/components/ui/input";
@@ -219,7 +215,7 @@ export function ImportsPage() {
                 key: "product",
                 label: "Sản phẩm nhập",
                 render: (row) => {
-                  const lineList = row.items && row.items.length > 0 ? row.items : [row];
+                  const lineList = row.items;
                   if (lineList.length === 1 && lineList[0]?.product) {
                     return (
                       <div>
@@ -253,7 +249,7 @@ export function ImportsPage() {
                 key: "quantity",
                 label: "Số lượng nhập",
                 render: (row) => {
-                  const lineList = row.items && row.items.length > 0 ? row.items : [row];
+                  const lineList = row.items;
                   const totalQty = lineList.reduce((sum, l) => sum + l.importQuantity, 0);
                   if (lineList.length === 1 && lineList[0]?.product) {
                     return (
@@ -273,14 +269,16 @@ export function ImportsPage() {
               {
                 key: "price",
                 label: "Đơn giá nhập",
-                render: (row) => formatVnd(row.importPrice),
+                render: (row) => row.items.length === 1
+                  ? formatVnd(row.items[0]?.importPrice ?? 0)
+                  : `${row.items.length} mức giá`,
               },
               {
                 key: "total",
                 label: "Tổng tiền",
                 render: (row) => (
                   <strong className="font-mono text-primary">
-                    {formatVnd(row.totalPrice)}
+                    {formatVnd(row.totalAmount)}
                   </strong>
                 ),
               },
@@ -288,8 +286,8 @@ export function ImportsPage() {
                 key: "expire",
                 label: "Hạn sử dụng",
                 render: (row) =>
-                  row.expireDate
-                    ? new Date(row.expireDate).toLocaleDateString("vi-VN")
+                  row.items[0]?.expireDate
+                    ? new Date(row.items[0].expireDate).toLocaleDateString("vi-VN")
                     : "—",
               },
               {

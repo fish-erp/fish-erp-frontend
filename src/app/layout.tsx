@@ -15,10 +15,12 @@ const beVietnamPro = Be_Vietnam_Pro({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Fish ERP",
-    template: "%s | Fish ERP",
+    default: "HVG",
+    template: "%s | HVG",
   },
   description: "Hệ thống quản lý thức ăn và thuốc cho cá.",
+  applicationName: "HVG",
+  icons: { icon: [{ url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" }, { url: "/brand/favicon-192.png", sizes: "192x192", type: "image/png" }], apple: "/brand/apple-touch-icon.png" },
 };
 
 export default async function RootLayout({

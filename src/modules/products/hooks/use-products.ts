@@ -17,7 +17,7 @@ export function useProducts(params: {
 }) {
   return useQuery({
     queryKey: ["products", params],
-    queryFn: () => productsService.list(params),
+    queryFn: ({ signal }) => productsService.list(params, signal),
   });
 }
 

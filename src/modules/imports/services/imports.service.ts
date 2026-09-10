@@ -10,9 +10,10 @@ import type {
 import type { QueryParamValue } from "@/types/api";
 
 export const importsService = {
-  list: (params: ListImportsParams) =>
+  list: (params: ListImportsParams, signal?: AbortSignal) =>
     apiClient.get<ImportList>("/api/backend/imports", {
       params: params as unknown as Record<string, QueryParamValue>,
+      signal,
     }),
   detail: (id: string) =>
     apiClient.get<ImportProductItem>(`/api/backend/imports/${id}`),

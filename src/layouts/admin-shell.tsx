@@ -1,6 +1,7 @@
 "use client";
 
-import { Fish, LogOut, Menu, Package, PackagePlus, Users, X } from "lucide-react";
+import { FileSpreadsheet, ContactRound, LogOut, Menu, Package, PackageMinus, PackagePlus, Users, X } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { useState } from "react";
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -11,6 +12,9 @@ const navigation = [
   { href: "/admin/users", label: "Quản lý người dùng", icon: Users },
   { href: "/admin/products", label: "Quản lý sản phẩm", icon: Package },
   { href: "/admin/imports", label: "Nhập kho", icon: PackagePlus },
+  { href: "/admin/exports", label: "Xuất hàng", icon: PackageMinus },
+  { href: "/admin/customers", label: "Khách hàng & công nợ", icon: ContactRound },
+  { href: "/admin/reports", label: "Báo cáo", icon: FileSpreadsheet },
 ];
 
 function AdminNavigation({ close }: { close?: () => void }) {
@@ -49,17 +53,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background lg:pl-64">
+    <div className="admin-shell min-h-screen bg-background lg:pl-64">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-white lg:flex">
         <Link
           href="/admin/users"
           className="flex h-20 items-center gap-3 px-6 text-xl font-bold text-primary"
         >
-          <span className="grid size-10 place-items-center rounded-2xl bg-primary text-white">
-            <Fish />
-          </span>
+          <BrandLogo />
           <span>
-            Fish ERP
+            HVG
             <br />
             <small className="text-xs font-medium text-muted-foreground">
               Administration Portal
@@ -83,7 +85,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white/90 px-4 backdrop-blur lg:hidden">
+      <header className="admin-mobile-header sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white/90 px-4 backdrop-blur lg:hidden">
         <button
           onClick={() => setOpen(true)}
           className="rounded-xl p-2 hover:bg-muted"
@@ -91,7 +93,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         >
           <Menu />
         </button>
-        <strong className="text-primary">Fish ERP</strong>
+        <strong className="flex items-center gap-2 text-primary"><BrandLogo size={32} />HVG</strong>
         <span className="size-10" aria-hidden="true" />
       </header>
 
@@ -104,7 +106,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           />
           <aside className="relative h-full w-[min(84vw,300px)] overflow-y-auto bg-white py-4 shadow-xl">
             <div className="mb-4 flex items-center justify-between px-5">
-              <strong className="text-lg text-primary">Fish ERP</strong>
+              <strong className="flex items-center gap-2 text-lg text-primary"><BrandLogo size={36} />HVG</strong>
               <button
                 onClick={() => setOpen(false)}
                 className="rounded-lg p-2 hover:bg-muted"

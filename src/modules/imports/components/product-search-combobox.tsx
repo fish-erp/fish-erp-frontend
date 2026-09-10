@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, Package, Plus, Search, X } from "lucide-react";
+import { Package, Plus, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,9 @@ import type { Product } from "@/modules/products/types/product";
 interface ProductSearchComboboxProps {
   selectedProduct: Product | null;
   onSelect: (product: Product | null) => void;
-  onRequestCreateNew: (searchTerm: string) => void;
+  onRequestCreateNew?: (searchTerm: string) => void;
   disabled?: boolean;
+  mode?: "import" | "export";
 }
 
 export function ProductSearchCombobox({
@@ -20,6 +21,7 @@ export function ProductSearchCombobox({
   onSelect,
   onRequestCreateNew,
   disabled = false,
+  mode = "import",
 }: ProductSearchComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -115,7 +117,7 @@ export function ProductSearchCombobox({
               <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
               <Input
                 disabled={disabled}
-                placeholder="Tìm mã hoặc tên sản phẩm để nhập kho..."
+                placeholder={`Tìm mã hoặc tên sản phẩm để ${mode === "export" ? "xuất kho" : "nhập kho"}...`}
                 value={searchTerm}
                 onFocus={() => setIsOpen(true)}
                 onChange={(e) => {
@@ -135,16 +137,18 @@ export function ProductSearchCombobox({
               )}
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              disabled={disabled}
-              onClick={() => onRequestCreateNew(searchTerm)}
-              className="shrink-0 text-primary hover:bg-primary/5 hover:text-primary"
-            >
-              <Plus className="size-4" />
-              Thêm sản phẩm mới
-            </Button>
+            {onRequestCreateNew && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={disabled}
+                onClick={() => onRequestCreateNew(searchTerm)}
+                className="shrink-0 text-primary hover:bg-primary/5 hover:text-primary"
+              >
+                <Plus className="size-4" />
+                Thêm sản phẩm mới
+              </Button>
+            )}
           </div>
 
           {isOpen && (
@@ -160,7 +164,7 @@ export function ProductSearchCombobox({
                       Không tìm thấy sản phẩm{" "}
                       {searchTerm ? `với từ khóa "${searchTerm}"` : "nào"}
                     </p>
-                    <button
+                    {onRequestCreateNew && <button
                       type="button"
                       onClick={() => {
                         setIsOpen(false);
@@ -170,7 +174,7 @@ export function ProductSearchCombobox({
                     >
                       <Plus className="size-3.5" />
                       Tạo ngay sản phẩm mới {searchTerm ? `"${searchTerm}"` : ""}
-                    </button>
+                    </button>}
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -211,7 +215,7 @@ export function ProductSearchCombobox({
                       </button>
                     ))}
 
-                    <div className="border-t pt-1.5">
+                    {onRequestCreateNew && <div className="border-t pt-1.5">
                       <button
                         type="button"
                         onClick={() => {
@@ -223,7 +227,7 @@ export function ProductSearchCombobox({
                         <Plus className="size-3.5" />
                         Sản phẩm chưa có? Tạo mới sản phẩm
                       </button>
-                    </div>
+                    </div>}
                   </div>
                 )}
               </div>

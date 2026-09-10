@@ -11,7 +11,7 @@ import type {
 export function useImports(params: ListImportsParams) {
   return useQuery({
     queryKey: ["imports", params],
-    queryFn: () => importsService.list(params),
+    queryFn: ({ signal }) => importsService.list(params, signal),
   });
 }
 
