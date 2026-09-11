@@ -43,12 +43,17 @@
   }
 
   .admin-shell > aside,
-  .admin-mobile-header {
+  .admin-shell > nav,
+  .admin-shell > header,
+  .admin-mobile-header,
+  [data-sonner-toaster] {
     display: none !important;
   }
 
   .admin-shell {
-    padding-left: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    background: white !important;
   }
 
   .print-page {

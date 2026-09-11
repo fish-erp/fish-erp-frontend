@@ -9,12 +9,12 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/modules/auth/components/auth-provider";
 
 const navigation = [
+  { href: "/admin/customers", label: "Khách hàng & công nợ", icon: ContactRound },
   { href: "/admin/products", label: "Quản lý sản phẩm", icon: Package },
   { href: "/admin/imports", label: "Nhập kho", icon: PackagePlus },
   { href: "/admin/exports", label: "Xuất hàng", icon: PackageMinus },
-  { href: "/admin/customers", label: "Khách hàng & công nợ", icon: ContactRound },
-  { href: "/admin/users", label: "Quản lý người dùng", icon: Users },
   { href: "/admin/reports", label: "Báo cáo", icon: FileSpreadsheet },
+  { href: "/admin/users", label: "Quản lý người dùng", icon: Users },
 ];
 
 const mobilePrimaryTabs = [
@@ -73,7 +73,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="admin-shell min-h-screen bg-background lg:pl-64">
       {/* Desktop Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-white lg:flex print:hidden">
         <Link
           href="/admin/products"
           className="flex h-20 items-center gap-3 px-6 text-xl font-bold text-primary"
@@ -105,7 +105,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Mobile Top App Bar */}
-      <header className="admin-mobile-header sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-white/95 px-4 backdrop-blur shadow-xs lg:hidden">
+      <header className="admin-mobile-header sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-white/95 px-4 backdrop-blur shadow-xs lg:hidden print:hidden">
         <div className="flex items-center gap-2.5">
           <BrandLogo size={28} />
           <div>
@@ -128,7 +128,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Menu Drawer */}
       {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden print:hidden">
           <button
             className="absolute inset-0 bg-foreground/40 backdrop-blur-xs transition-opacity"
             aria-label="Đóng menu"
@@ -179,7 +179,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Mobile Bottom Navigation Bar */}
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="fixed bottom-0 inset-x-0 z-40 flex h-16 items-center justify-around border-t bg-white/95 px-1 backdrop-blur shadow-[0_-4px_16px_rgba(0,0,0,0.06)] lg:hidden safe-bottom"
+        className="fixed bottom-0 inset-x-0 z-40 flex h-16 items-center justify-around border-t bg-white/95 px-1 backdrop-blur shadow-[0_-4px_16px_rgba(0,0,0,0.06)] lg:hidden safe-bottom print:hidden"
       >
         {mobilePrimaryTabs.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(`${href}/`);
