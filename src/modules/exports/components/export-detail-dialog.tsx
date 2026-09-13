@@ -19,7 +19,27 @@ export function ExportDetailDialog({ invoice: initial, open, onOpenChange }: { i
   return <Dialog.Root open={open} onOpenChange={onOpenChange}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-xs" /><Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[92vh] w-full rounded-t-3xl border-t bg-white p-4 pb-8 shadow-2xl overflow-y-auto sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[92vh] sm:w-[calc(100%-2rem)] sm:max-w-3xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6 sm:border">
     <div className="flex justify-between border-b pb-3"><div><Dialog.Title className="text-lg sm:text-xl font-bold text-primary">{invoice.invoiceCode}</Dialog.Title><Dialog.Description className="text-xs sm:text-sm text-muted-foreground">{formatDateTime(invoice.completedAt ?? invoice.createdAt)} · {invoice.exportType === "DELIVERY" ? "Giao hàng" : "Bán tại nhà"}</Dialog.Description></div><Dialog.Close className="rounded-lg p-2 hover:bg-muted"><X className="size-5" /></Dialog.Close></div>
     <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2"><p><span className="text-muted-foreground">Khách hàng:</span> {invoice.customerName || "—"}</p><p><span className="text-muted-foreground">Điện thoại:</span> {invoice.customerPhone || "—"}</p>{invoice.deliveryAddress && <p className="sm:col-span-2"><span className="text-muted-foreground">Địa chỉ:</span> {invoice.deliveryAddress}</p>}</div>
-    <div className="mt-4 overflow-hidden rounded-xl border"><table className="w-full text-sm"><thead className="bg-secondary text-left"><tr><th className="p-3">Sản phẩm</th><th className="p-3 text-right">Số lượng</th><th className="p-3 text-right">Thành tiền</th></tr></thead><tbody>{invoice.items.map((item) => <tr key={item.id} className="border-t"><td className="p-3"><strong>{item.product.productName}</strong><p className="text-xs text-muted-foreground">{item.product.productCode}</p></td><td className="p-3 text-right">{item.exportQuantity} {item.product.productUnit}</td><td className="p-3 text-right">{formatVnd((item.unitPrice ?? item.product.productPrice) * item.exportQuantity)}</td></tr>)}</tbody></table></div>
+    <div className="mt-4 overflow-hidden rounded-xl border"><table className="w-full text-sm"><thead className="bg-secondary text-left"><tr><th className="p-3">Sản phẩm</th><th className="p-3 text-right">Số lượng</th><th className="p-3 text-right">Đơn giá</th><th className="p-3 text-right">Thành tiền</th></tr></thead><tbody>{invoice.items.map((item) => {
+      const origPrice = item.originalPrice ?? item.product.productPrice;
+      const sellingPrice = item.unitPrice ?? item.product.productPrice;
+      const hasDiscount = origPrice > sellingPrice;
+      return (
+        <tr key={item.id} className="border-t">
+          <td className="p-3">
+            <strong>{item.product.productName}</strong>
+            <p className="text-xs text-muted-foreground">{item.product.productCode}</p>
+            {hasDiscount && (
+              <p className="text-xs text-emerald-600 font-medium">
+                (Gốc: {formatVnd(origPrice)} - Giảm: {formatVnd(origPrice - sellingPrice)})
+              </p>
+            )}
+          </td>
+          <td className="p-3 text-right">{item.exportQuantity} {item.product.productUnit}</td>
+          <td className="p-3 text-right">{formatVnd(sellingPrice)}</td>
+          <td className="p-3 text-right font-medium">{formatVnd(sellingPrice * item.exportQuantity)}</td>
+        </tr>
+      );
+    })}</tbody></table></div>
     {/* Khối tóm tắt thanh toán & liên kết tới Quản lý công nợ khách hàng */}
     <div className="mt-4 rounded-xl border bg-secondary/30 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
@@ -89,7 +109,7 @@ export function ExportDetailDialog({ invoice: initial, open, onOpenChange }: { i
         }
       >
         <Printer className="size-4" />
-        Mở bản in A4
+        Mở bản in A5
       </Button>
     </div>
   </Dialog.Content></Dialog.Portal></Dialog.Root>;
