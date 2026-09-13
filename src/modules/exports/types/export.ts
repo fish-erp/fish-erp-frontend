@@ -9,6 +9,8 @@ export interface ExportLineItem {
   productId: string;
   exportQuantity: number;
   unitPrice: number | null;
+  originalPrice?: number | null;
+  discount?: number;
   lineNote: string | null;
   product: Product;
 }
@@ -51,7 +53,14 @@ export interface ExportInput {
   customerPhone?: string;
   deliveryAddress?: string;
   exportNote?: string;
-  items: Array<{ productId: string; exportQuantity: number; lineNote?: string }>;
+  items: Array<{
+    productId: string;
+    exportQuantity: number;
+    originalPrice?: number;
+    discount?: number;
+    unitPrice?: number;
+    lineNote?: string;
+  }>;
 }
 
 export type ExportList = PaginatedResponse<ExportInvoice>;

@@ -19,6 +19,7 @@ interface LineState {
   id: string;
   product: Product | null;
   quantity: number | "";
+  discount: number | "";
   note: string;
 }
 
@@ -26,6 +27,7 @@ const emptyLine = (): LineState => ({
   id: clientId(),
   product: null,
   quantity: "",
+  discount: "",
   note: "",
 });
 
@@ -49,7 +51,7 @@ export function CreateExportDialog({
   const [customer, setCustomer] = useState<(Partial<Customer> & Pick<Customer, "id" | "name" | "phoneNumber">) | null>(null);
   const [paidInFull, setPaidInFull] = useState(true);
   const [paidAmount, setPaidAmount] = useState<number | "">(0);
-  const [shippingFee, setShippingFee] = useState<number | "">(5000);
+  const [shippingRate, setShippingRate] = useState<number | "">(5000);
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +59,10 @@ export function CreateExportDialog({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setInvoiceCode(editing?.invoiceCode ?? "");
     setExportType(editing?.exportType ?? "AT_HOME");
-    setShippingFee(editing?.shippingFee ?? 5000);
+    const initialShipRate = editing?.shippingFee && editing.totalQuantity > 0
+      ? Math.round(editing.shippingFee / editing.totalQuantity)
+      : (editing?.shippingFee ?? 5000);
+    setShippingRate(initialShipRate);
     setCustomerName(editing?.customerName ?? "");
     setCustomerPhone(editing?.customerPhone ?? "");
     setCustomer(editing?.customerId ? { id: editing.customerId, name: editing.customerName ?? "Khách hàng", phoneNumber: editing.customerPhone ?? "" } : null);
@@ -65,12 +70,18 @@ export function CreateExportDialog({
     setPaidAmount(editing?.paidAmount ?? 0);
     setDeliveryAddress(editing?.deliveryAddress ?? "");
     setExportNote(editing?.exportNote ?? "");
-    setLines(editing?.items.map((item) => ({
-      id: item.id,
-      product: item.product,
-      quantity: item.exportQuantity,
-      note: item.lineNote ?? "",
-    })) ?? [emptyLine()]);
+    setLines(editing?.items.map((item) => {
+      const origPrice = item.originalPrice ?? item.product?.productPrice ?? 0;
+      const sellingPrice = item.unitPrice ?? item.product?.productPrice ?? 0;
+      const discount = item.discount !== undefined ? item.discount : Math.max(0, origPrice - sellingPrice);
+      return {
+        id: item.id,
+        product: item.product,
+        quantity: item.exportQuantity,
+        discount: discount > 0 ? discount : "",
+        note: item.lineNote ?? "",
+      };
+    }) ?? [emptyLine()]);
   }, [open, editing]);
 
   const updateLine = (index: number, patch: Partial<LineState>) => {
@@ -91,12 +102,15 @@ export function CreateExportDialog({
       toast.error("Mỗi sản phẩm chỉ được chọn một lần trong phiếu xuất");
       return;
     }
-    if (exportStatus === "COMPLETED") {
-      const insufficient = lines.find((line) => Number(line.quantity) > line.product!.remainingQuantity);
-      if (insufficient) {
-        toast.error(`${insufficient.product!.productName} không đủ tồn kho`);
-        return;
-      }
+    const overStock = lines.find((line) => line.product && Number(line.quantity) > line.product.remainingQuantity);
+    if (overStock) {
+      toast.error(`${overStock.product!.productName} không đủ tồn kho (chỉ còn ${overStock.product!.remainingQuantity})`);
+      return;
+    }
+    const overDiscount = lines.find((line) => line.product && Number(line.discount) > line.product.productPrice);
+    if (overDiscount) {
+      toast.error(`${overDiscount.product!.productName} có mức giảm giá vượt quá giá gốc`);
+      return;
     }
     const input = {
       ...(invoiceCode.trim() ? { invoiceCode: invoiceCode.trim() } : {}),
@@ -109,11 +123,19 @@ export function CreateExportDialog({
       customerPhone: customerPhone.trim(),
       deliveryAddress: deliveryAddress.trim(),
       exportNote: exportNote.trim(),
-      items: lines.map((line) => ({
-        productId: line.product!.id,
-        exportQuantity: Number(line.quantity),
-        ...(line.note.trim() ? { lineNote: line.note.trim() } : {}),
-      })),
+      items: lines.map((line) => {
+        const origPrice = line.product!.productPrice;
+        const discount = Number(line.discount) || 0;
+        const unitPrice = Math.max(0, origPrice - discount);
+        return {
+          productId: line.product!.id,
+          exportQuantity: Number(line.quantity),
+          originalPrice: origPrice,
+          discount: discount,
+          unitPrice: unitPrice,
+          ...(line.note.trim() ? { lineNote: line.note.trim() } : {}),
+        };
+      }),
     };
     try {
       if (editing) await mutations.update.mutateAsync({ id: editing.id, input });
@@ -127,8 +149,13 @@ export function CreateExportDialog({
 
   const pending = mutations.create.isPending || mutations.update.isPending;
   const totalQuantity = lines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
-  const productsTotal = lines.reduce((sum, line) => sum + (Number(line.quantity) || 0) * (line.product?.productPrice ?? 0), 0);
-  const effectiveShippingFee = exportType === "DELIVERY" ? (Number(shippingFee) || 0) : 0;
+  const productsTotal = lines.reduce((sum, line) => {
+    const origPrice = line.product?.productPrice ?? 0;
+    const discount = Number(line.discount) || 0;
+    const sellingPrice = Math.max(0, origPrice - discount);
+    return sum + (Number(line.quantity) || 0) * sellingPrice;
+  }, 0);
+  const effectiveShippingFee = exportType === "DELIVERY" ? (Number(shippingRate) || 0) * totalQuantity : 0;
   const totalAmount = productsTotal + effectiveShippingFee;
 
   return <Dialog.Root open={open} onOpenChange={value => { if (!pending) onOpenChange(value); }}>
@@ -149,8 +176,8 @@ export function CreateExportDialog({
               onChange={(event) => {
                 const nextType = event.target.value as ExportType;
                 setExportType(nextType);
-                if (nextType === "DELIVERY" && (shippingFee === "" || shippingFee === 0)) {
-                  setShippingFee(5000);
+                if (nextType === "DELIVERY" && (shippingRate === "" || shippingRate === 0)) {
+                  setShippingRate(5000);
                 }
               }}
             >
@@ -164,21 +191,19 @@ export function CreateExportDialog({
             <>
               <label className="sm:col-span-1"><span className="mb-1 block text-xs font-semibold">Địa chỉ giao hàng</span><Input value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} /></label>
               <label className="sm:col-span-1">
-                <span className="mb-1 block text-xs font-semibold">Tiền ship (₫)</span>
+                <span className="mb-1 block text-xs font-semibold">Tiền ship / đầu sp (₫/sp)</span>
                 <Input
                   type="number"
                   min={0}
                   step="any"
-                  value={shippingFee}
+                  value={shippingRate}
                   disabled={pending}
                   placeholder="5000"
-                  onChange={(event) => setShippingFee(event.target.value === "" ? "" : Number(event.target.value))}
+                  onChange={(event) => setShippingRate(event.target.value === "" ? "" : Number(event.target.value))}
                 />
-                {Number(shippingFee) > 0 && (
-                  <p className="mt-1 text-xs font-semibold text-primary">
-                    👉 {formatMoneyPreview(Number(shippingFee))}
-                  </p>
-                )}
+                <div className="mt-1 text-xs font-semibold text-primary">
+                  👉 {formatVnd(Number(shippingRate) || 0)} × {totalQuantity} sp = {formatVnd(effectiveShippingFee)} (Tổng tiền ship)
+                </div>
               </label>
             </>
           )}
@@ -189,12 +214,129 @@ export function CreateExportDialog({
           <div className="flex items-center justify-between"><strong className="text-sm">Danh sách sản phẩm ({lines.length})</strong><Button variant="outline" size="sm" onClick={() => setLines((current) => [...current, emptyLine()])}><Plus className="size-4" />Thêm sản phẩm</Button></div>
           {lines.map((line, index) => <div key={line.id} className="rounded-xl border bg-card p-3">
             <div className="mb-2 flex items-center justify-between"><strong className="text-xs text-muted-foreground">Mặt hàng #{index + 1}</strong>{lines.length > 1 && <Button variant="ghost" size="sm" className="text-danger" onClick={() => setLines((current) => current.filter((_, i) => i !== index))}><Trash2 className="size-4" />Xóa</Button>}</div>
-            <ProductSearchCombobox mode="export" selectedProduct={line.product} onSelect={(product) => updateLine(index, { product })} disabled={pending} />
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label><span className="mb-1 block text-xs font-semibold">Số lượng {line.product ? `(${line.product.productUnit})` : ""}</span><Input type="number" min={1} step={1} value={line.quantity} onChange={(event) => updateLine(index, { quantity: event.target.value === "" ? "" : Number(event.target.value) })} /></label>
-              <label><span className="mb-1 block text-xs font-semibold">Ghi chú dòng</span><Input value={line.note} onChange={(event) => updateLine(index, { note: event.target.value })} /></label>
+            <ProductSearchCombobox
+              mode="export"
+              selectedProduct={line.product}
+              onSelect={(product) => {
+                const maxStock = product ? Math.max(0, product.remainingQuantity) : undefined;
+                const curQty = Number(line.quantity) || 0;
+                const nextQty = maxStock !== undefined && curQty > maxStock ? (maxStock > 0 ? maxStock : "") : line.quantity;
+                const curDiscount = Number(line.discount) || 0;
+                const nextDiscount = product && curDiscount > product.productPrice ? product.productPrice : line.discount;
+                updateLine(index, { product, quantity: nextQty, discount: nextDiscount });
+              }}
+              disabled={pending}
+            />
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <label>
+                <span className="mb-1 block text-xs font-semibold">
+                  Số lượng {line.product ? `(${line.product.productUnit})` : ""}
+                  {line.product && (
+                    <span className="ml-1 font-normal text-muted-foreground">
+                      · Tồn:{" "}
+                      <strong className={line.product.remainingQuantity > 0 ? "text-primary" : "text-danger"}>
+                        {line.product.remainingQuantity}
+                      </strong>
+                    </span>
+                  )}
+                </span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={line.product ? Math.max(0, line.product.remainingQuantity) : undefined}
+                  step={1}
+                  value={line.quantity}
+                  disabled={pending || !line.product || line.product.remainingQuantity <= 0}
+                  placeholder={
+                    !line.product
+                      ? "Chọn sản phẩm trước"
+                      : line.product.remainingQuantity <= 0
+                      ? "Hết hàng"
+                      : `Tối đa ${line.product.remainingQuantity}`
+                  }
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    if (raw === "") {
+                      updateLine(index, { quantity: "" });
+                      return;
+                    }
+                    const val = Number(raw);
+                    const maxStock = line.product ? Math.max(0, line.product.remainingQuantity) : undefined;
+                    if (maxStock !== undefined && val > maxStock) {
+                      updateLine(index, { quantity: maxStock });
+                    } else {
+                      updateLine(index, { quantity: val });
+                    }
+                  }}
+                />
+                {line.product && line.product.remainingQuantity <= 0 && (
+                  <span className="mt-1 block text-[11px] font-medium text-danger">
+                    Sản phẩm này đã hết hàng trong kho
+                  </span>
+                )}
+              </label>
+              <label>
+                <span className="mb-1 block text-xs font-semibold">
+                  Giảm giá / sp (₫)
+                  {line.product && (
+                    <span className="ml-1 font-normal text-muted-foreground">
+                      (Tối đa: {formatVnd(line.product.productPrice)})
+                    </span>
+                  )}
+                </span>
+                <Input
+                  type="number"
+                  min={0}
+                  max={line.product ? line.product.productPrice : undefined}
+                  step="any"
+                  placeholder="0"
+                  value={line.discount}
+                  disabled={pending || !line.product}
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    if (raw === "") {
+                      updateLine(index, { discount: "" });
+                      return;
+                    }
+                    const val = Number(raw);
+                    const origPrice = line.product ? line.product.productPrice : undefined;
+                    if (origPrice !== undefined && val > origPrice) {
+                      updateLine(index, { discount: origPrice });
+                    } else {
+                      updateLine(index, { discount: val });
+                    }
+                  }}
+                />
+                {Number(line.discount) > 0 && (
+                  <span className="mt-1 block text-[11px] text-amber-600 font-medium">
+                    Giảm: {formatMoneyPreview(Number(line.discount))}
+                  </span>
+                )}
+              </label>
+              <label>
+                <span className="mb-1 block text-xs font-semibold">Ghi chú dòng</span>
+                <Input value={line.note} onChange={(event) => updateLine(index, { note: event.target.value })} />
+              </label>
             </div>
-            {line.product && <p className="mt-2 text-right text-sm text-muted-foreground">Tạm tính: <strong className="text-primary">{formatVnd((Number(line.quantity) || 0) * line.product.productPrice)}</strong></p>}
+            {line.product && (
+              <div className="mt-2 flex flex-wrap items-center justify-between text-xs sm:text-sm text-muted-foreground border-t pt-2">
+                <div>
+                  <span>Giá gốc: <strong>{formatVnd(line.product.productPrice)}</strong></span>
+                  {Number(line.discount) > 0 ? (
+                    <span className="ml-2 text-emerald-600 font-semibold">
+                      👉 Giá bán: {formatVnd(Math.max(0, line.product.productPrice - Number(line.discount)))}
+                    </span>
+                  ) : (
+                    <span className="ml-2 text-muted-foreground">(Không giảm)</span>
+                  )}
+                </div>
+                <div>
+                  Tạm tính: <strong className="text-primary font-bold text-sm sm:text-base">
+                    {formatVnd((Number(line.quantity) || 0) * Math.max(0, line.product.productPrice - (Number(line.discount) || 0)))}
+                  </strong>
+                </div>
+              </div>
+            )}
           </div>)}
         </div>
 
@@ -238,7 +380,7 @@ export function CreateExportDialog({
             <span className="text-muted-foreground">Tổng {totalQuantity} đơn vị · </span>
             {exportType === "DELIVERY" && effectiveShippingFee > 0 ? (
               <span>
-                Hàng: <strong>{formatVnd(productsTotal)}</strong> + Ship: <strong>{formatVnd(effectiveShippingFee)}</strong> ={" "}
+                Hàng: <strong>{formatVnd(productsTotal)}</strong> + Ship: <strong>{formatVnd(effectiveShippingFee)}</strong> ({formatVnd(Number(shippingRate) || 0)} × {totalQuantity} sp) ={" "}
                 <strong className="text-primary text-base">{formatVnd(totalAmount)}</strong>
               </span>
             ) : (

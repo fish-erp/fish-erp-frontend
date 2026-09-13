@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 
 export interface Column<T> {
   key: string;
-  label: string;
+  label: React.ReactNode;
   className?: string;
   render: (row: T) => React.ReactNode;
 }

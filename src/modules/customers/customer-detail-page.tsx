@@ -1,8 +1,9 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, DollarSign, History, Receipt, RotateCcw, ShoppingBag, Wallet } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, CheckCircle2, DollarSign, History, Printer, Receipt, RotateCcw, ShoppingBag, Wallet } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocale } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
@@ -21,6 +22,54 @@ export function CustomerDetailPage({ id }: { id: string }) {
   const [paymentPage, setPaymentPage] = useState(1);
   const PAYMENTS_PER_PAGE = 10;
   const [viewing, setViewing] = useState<ExportInvoice | null>(null);
+  const locale = useLocale();
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
+  const [includePriceBatch, setIncludePriceBatch] = useState(false);
+
+  const toggleSelectAllInvoices = () => {
+    if (!customer?.invoices?.length) return;
+    const allIds = customer.invoices.map((inv) => inv.id);
+    const allSelected = allIds.every((id) => selectedInvoiceIds.has(id));
+    const next = new Set(selectedInvoiceIds);
+    if (allSelected) {
+      allIds.forEach((id) => next.delete(id));
+    } else {
+      allIds.forEach((id) => next.add(id));
+    }
+    setSelectedInvoiceIds(next);
+  };
+
+  const toggleInvoice = (invoiceId: string) => {
+    const next = new Set(selectedInvoiceIds);
+    if (next.has(invoiceId)) {
+      next.delete(invoiceId);
+    } else {
+      next.add(invoiceId);
+    }
+    setSelectedInvoiceIds(next);
+  };
+
+  const handleBatchPrint = () => {
+    if (selectedInvoiceIds.size === 0) {
+      toast.error("Vui lòng chọn ít nhất 1 hóa đơn để in");
+      return;
+    }
+    if (selectedInvoiceIds.size === 1) {
+      const [singleId] = Array.from(selectedInvoiceIds);
+      window.open(
+        `/${locale}/admin/exports/${singleId}/print?includePrice=${includePriceBatch}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+      return;
+    }
+    const ids = Array.from(selectedInvoiceIds).join(",");
+    window.open(
+      `/${locale}/admin/exports/batch-print?ids=${ids}&includePrice=${includePriceBatch}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
 
   // Tab chuyển đổi: Thu nợ hoặc Nạp tiền trả trước
   const [actionType, setActionType] = useState<"DEBT" | "ADVANCE">("DEBT");
@@ -37,6 +86,31 @@ export function CustomerDetailPage({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const query = useCustomer(id, page);
   const customer = query.data;
+
+  // Danh sách các hóa đơn chưa thu tiền (còn nợ) trên trang hiện tại
+  const unpaidInvoices = useMemo(() => {
+    if (!customer?.invoices?.length) return [];
+    return customer.invoices.filter(
+      (inv) =>
+        inv.exportStatus !== "CANCELLED" &&
+        inv.exportStatus !== "EDITING" &&
+        inv.paymentStatus !== "PAID" &&
+        (inv.outstandingAmount ?? inv.totalAmount) > 0
+    );
+  }, [customer?.invoices]);
+
+  const toggleSelectUnpaidInvoices = () => {
+    if (!unpaidInvoices.length) return;
+    const unpaidIds = unpaidInvoices.map((inv) => inv.id);
+    const allUnpaidSelected = unpaidIds.every((id) => selectedInvoiceIds.has(id));
+    const next = new Set(selectedInvoiceIds);
+    if (allUnpaidSelected) {
+      unpaidIds.forEach((id) => next.delete(id));
+    } else {
+      unpaidIds.forEach((id) => next.add(id));
+    }
+    setSelectedInvoiceIds(next);
+  };
 
   // Dữ liệu phân trang lịch sử thu tiền (10 dòng/trang)
   const allPayments = customer?.payments ?? [];
@@ -119,7 +193,7 @@ export function CustomerDetailPage({ id }: { id: string }) {
       title={customer?.name ?? "Chi tiết khách hàng"}
       description={
         customer
-          ? `${customer.phoneNumber} · ${customer.address || "Chưa có địa chỉ"}${customer.archived ? " · Ngừng sử dụng" : ""}`
+          ? `${customer.phoneNumber ? `${customer.phoneNumber} · ` : ""}${customer.address || "Chưa có địa chỉ"}${customer.archived ? " · Ngừng sử dụng" : ""}`
           : "Hồ sơ khách hàng và quản lý công nợ"
       }
       actions={
@@ -546,10 +620,70 @@ export function CustomerDetailPage({ id }: { id: string }) {
 
           {/* Danh sách đơn hàng */}
           <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
-              <Receipt className="size-5 text-primary" />
-              Lịch sử mua hàng ({customer.meta?.total ?? customer.invoices?.length ?? 0} đơn hàng)
-            </h3>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1.5">
+                <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Receipt className="size-5 text-primary" />
+                  Lịch sử mua hàng ({customer.meta?.total ?? customer.invoices?.length ?? 0} đơn hàng)
+                </h3>
+                {Boolean(customer.invoices?.length) && (
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300 transition select-none">
+                    <input
+                      type="checkbox"
+                      checked={
+                        unpaidInvoices.length > 0 &&
+                        unpaidInvoices.every((inv) => selectedInvoiceIds.has(inv.id))
+                      }
+                      onChange={toggleSelectUnpaidInvoices}
+                      disabled={unpaidInvoices.length === 0}
+                      className="size-4 rounded accent-amber-600 cursor-pointer"
+                    />
+                    <span>
+                      Chọn hết đơn chưa thu tiền
+                      <span className="ml-1 text-danger font-bold">
+                        ({unpaidInvoices.length})
+                      </span>
+                    </span>
+                  </label>
+                )}
+              </div>
+              {selectedInvoiceIds.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="gap-1.5 bg-primary text-white"
+                    onClick={handleBatchPrint}
+                  >
+                    <Printer className="size-4" /> In {selectedInvoiceIds.size} hóa đơn đã chọn
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    onClick={() => setSelectedInvoiceIds(new Set())}
+                  >
+                    Bỏ chọn
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {selectedInvoiceIds.size > 0 && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-xs">
+                <span className="font-semibold text-primary">
+                  Đã chọn {selectedInvoiceIds.size} hóa đơn
+                </span>
+                <label className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={includePriceBatch}
+                    onChange={(e) => setIncludePriceBatch(e.target.checked)}
+                    className="size-4 rounded accent-primary"
+                  />
+                  Hiển thị giá tiền trên bản in
+                </label>
+              </div>
+            )}
 
             {!customer.invoices?.length ? (
               <p className="mt-4 rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
@@ -563,16 +697,24 @@ export function CustomerDetailPage({ id }: { id: string }) {
                   renderMobileCard={(i) => (
                     <div className="rounded-2xl border bg-white p-4 shadow-xs transition active:scale-[0.99]">
                       <div className="flex items-start justify-between gap-2 border-b pb-3">
-                        <div>
-                          <button
-                            className="font-mono text-base font-bold text-primary hover:underline text-left block"
-                            onClick={() => setViewing(i)}
-                          >
-                            {i.invoiceCode}
-                          </button>
-                          <span className="text-[11px] text-muted-foreground">
-                            {formatDateTime(i.completedAt ?? i.createdAt)}
-                          </span>
+                        <div className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            className="size-4 rounded accent-primary cursor-pointer"
+                            checked={selectedInvoiceIds.has(i.id)}
+                            onChange={() => toggleInvoice(i.id)}
+                          />
+                          <div>
+                            <button
+                              className="font-mono text-base font-bold text-primary hover:underline text-left block"
+                              onClick={() => setViewing(i)}
+                            >
+                              {i.invoiceCode}
+                            </button>
+                            <span className="text-[11px] text-muted-foreground">
+                              {formatDateTime(i.completedAt ?? i.createdAt)}
+                            </span>
+                          </div>
                         </div>
                         <StatusBadge status={i.exportStatus} />
                       </div>
@@ -621,6 +763,31 @@ export function CustomerDetailPage({ id }: { id: string }) {
                     </div>
                   )}
                   columns={[
+                    {
+                      key: "select",
+                      label: (
+                        <input
+                          type="checkbox"
+                          className="size-4 rounded accent-primary cursor-pointer"
+                          checked={
+                            Boolean(customer.invoices?.length) &&
+                            customer.invoices.every((inv) => selectedInvoiceIds.has(inv.id))
+                          }
+                          onChange={toggleSelectAllInvoices}
+                          title="Chọn tất cả đơn trên trang này"
+                        />
+                      ),
+                      className: "w-10 text-center",
+                      render: (i) => (
+                        <input
+                          type="checkbox"
+                          className="size-4 rounded accent-primary cursor-pointer"
+                          checked={selectedInvoiceIds.has(i.id)}
+                          onChange={() => toggleInvoice(i.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ),
+                    },
                     {
                       key: "code",
                       label: "Mã hóa đơn",

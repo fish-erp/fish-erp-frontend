@@ -6,7 +6,7 @@ import type { ExportInvoice } from "@/modules/exports/types/export";
 export interface Customer {
   id: string;
   name: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
   address: string | null;
   archived: boolean;
   totalPurchased?: number;
@@ -17,8 +17,8 @@ export interface Customer {
 
 export interface CustomerInput {
   name: string;
-  phoneNumber: string;
-  address: string;
+  phoneNumber?: string | null;
+  address?: string | null;
 }
 
 export interface CustomerPayment {

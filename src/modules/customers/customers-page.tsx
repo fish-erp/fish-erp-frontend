@@ -323,7 +323,14 @@ export function CustomersPage() {
               {
                 key: "phone",
                 label: "Số điện thoại",
-                render: (c) => <span className="font-mono text-sm">{c.phoneNumber}</span>,
+                render: (c) =>
+                  c.phoneNumber ? (
+                    <span className="font-mono text-sm">{c.phoneNumber}</span>
+                  ) : (
+                    <span className="text-xs italic text-muted-foreground">
+                      Chưa có SĐT
+                    </span>
+                  ),
               },
               {
                 key: "address",
